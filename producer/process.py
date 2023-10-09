@@ -67,14 +67,17 @@ class Producer:
         parsed_message = {}
 
         if message_type == 'I':
+            logging.info(f"INSERT Message, Message Type: {message_type} - {data.data_start}")
             parser = InsertMessage(data.payload, cursor=cursor)
             parsed_message = parser.decode_insert_message()
 
         elif message_type == 'U':
+            logging.info(f"UPDATE Message, Message Type: {message_type} - {data.data_start}")
             parser = UpdateMessage(data.payload, cursor=cursor)
             parsed_message = parser.decode_update_message()
 
         elif message_type == 'D':
+            logging.info(f"DELETE Message, Message Type: {message_type} - {data.data_start}")
             parser = DeleteMessage(data.payload, cursor=cursor)
             parsed_message = parser.decode_delete_message()
 
@@ -84,6 +87,9 @@ class Producer:
         if parsed_message:
             logging.debug(f"Message type: {message_type}, parsed message: {json.dumps(parsed_message, indent=4)}")
             self.perform_action(message_type, parsed_message)
+
+        if message_type in ('I', 'U', 'D'):
+            logging.info(f"Sending feedback, Message Type: {message_type} - {data.data_start}")
 
         self.cur.send_feedback(flush_lsn=data.data_start)
 
