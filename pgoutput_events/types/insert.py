@@ -17,10 +17,10 @@ class InsertMessage(BaseMessage):
             new_tuple = self.read_string(length=1)
             new_tuple_values = self.decode_tuple()
 
-            logging.debug(f"Message type: {message_type}")
-            logging.debug(f"Relation ID: {relation_id}")
-            logging.debug(f"New tuple: {new_tuple}")
-            logging.debug(f"New tuple values: {new_tuple_values}")
+            logging.debug(f'Message type: {message_type}')
+            logging.debug(f'Relation ID: {relation_id}')
+            logging.debug(f'New tuple: {new_tuple}')
+            logging.debug(f'New tuple values: {new_tuple_values}')
 
             return {
                 'message_type': message_type,

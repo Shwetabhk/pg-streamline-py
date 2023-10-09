@@ -1,0 +1,6 @@
+# .coveragerc
+[run]
+omit =
+    main.py
+    tests/*
+    */__init__.py

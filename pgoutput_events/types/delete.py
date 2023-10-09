@@ -17,9 +17,9 @@ class DeleteMessage(BaseMessage):
             old_tuple = self.read_string(length=1)
             old_tuple_values = self.decode_tuple()
 
-            logging.debug(f"Message type: {message_type}")
-            logging.debug(f"Relation ID: {relation_id}")
-            logging.debug(f"Old tuple: {old_tuple}")
+            logging.debug(f'Message type: {message_type}')
+            logging.debug(f'Relation ID: {relation_id}')
+            logging.debug(f'Old tuple: {old_tuple}')
 
             return {
                 'message_type': message_type,

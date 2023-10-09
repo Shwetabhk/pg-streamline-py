@@ -10,8 +10,8 @@ class Utils:
 
     @staticmethod
     def convert_bytes_to_int(in_bytes: bytes) -> int:
-        return int.from_bytes(in_bytes, byteorder="big", signed=True)
+        return int.from_bytes(in_bytes, byteorder='big', signed=True)
 
     @staticmethod
     def convert_bytes_to_utf8(in_bytes: Union[bytes, bytearray]) -> str:
-        return in_bytes.decode("utf-8")
+        return in_bytes.decode('utf-8')
