@@ -1,8 +1,8 @@
-# pgoutput-parser
+# pgoutput-events
 
 ## Overview
 
-`pgoutput-parser` is a Python-based PostgreSQL logical replication consumer. It listens to changes in the PostgreSQL database and processes INSERT, UPDATE, and DELETE events.
+`pgoutput-events` is a Python-based PostgreSQL logical replication consumer. It listens to changes in the PostgreSQL database and processes INSERT, UPDATE, and DELETE events.
 
 ## Features
 
