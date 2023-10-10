@@ -36,7 +36,6 @@ jobs:
       # Post Pytest coverage as a comment on PR
       - name: Pytest coverage comment
         uses: MishaKav/pytest-coverage-comment@main
-        if: always() && github.ref != 'refs/heads/main'
         with:
           create-new-comment: true
           pytest-coverage-path: ./pytest-coverage.txt
