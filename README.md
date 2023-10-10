@@ -7,7 +7,7 @@
 ## Features
 
 - Supports PostgreSQL logical replication
-- Decodes INSERT, UPDATE, and DELETE messages
+- Decodes INSERT, UPDATE, and DELETE messages according to https://www.postgresql.org/docs/16/protocol-logicalrep-message-formats.html
 - Extensible for custom actions
 - Built-in logging
 
