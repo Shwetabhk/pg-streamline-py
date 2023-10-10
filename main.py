@@ -1,6 +1,6 @@
 import json
 import logging
-from producer import Producer  # Importing the Producer class from the producer module
+from pgoutput_events import Producer  # Importing the Producer class from the producer module
 
 
 # Setting up basic logging configuration

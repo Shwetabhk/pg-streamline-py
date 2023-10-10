@@ -3,7 +3,7 @@ import pytest
 from unittest import mock
 
 from .conftest import EventProducer
-from producer import Producer
+from pgoutput_events import Producer
 
 
 # Test initialization of Producer

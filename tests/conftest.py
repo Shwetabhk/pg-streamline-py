@@ -3,7 +3,7 @@ import logging
 import pytest
 from unittest.mock import patch
 
-from producer.process import Producer
+from pgoutput_events import Producer
 
 
 

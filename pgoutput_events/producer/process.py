@@ -13,7 +13,7 @@ from pgoutput_events import (
     DeleteMessage
 )
 
-from .utils import setup_custom_logging
+from pgoutput_events.utils import setup_custom_logging
 
 
 class Producer:

@@ -14,24 +14,29 @@
 ## Directory Structure
 
 ```plaintext
-pgoutput-parser/
+├── LICENSE
 ├── README.md
-├── main.py # This is a test file that can give you example code for extending Producer
-├── pgoutput_events/
-│   ├── __init__.py
-│   ├── types/
-│   │   ├── __init__.py
-│   │   ├── base.py
-│   │   ├── delete.py
-│   │   ├── insert.py
-│   │   └── update.py
-│   └── utils.py
-├── producer/
-│   ├── PRODUCER.md
-│   ├── __init__.py
-│   ├── process.py
-│   └── utils.py
-└── requirements.txt
+├── main.py
+├── pgoutput_events
+│   ├── __init__.py
+│   ├── producer
+│   │   ├── PRODUCER.md
+│   │   ├── __init__.py
+│   │   └── process.py
+│   ├── types
+│   │   ├── __init__.py
+│   │   ├── base.py
+│   │   ├── delete.py
+│   │   ├── insert.py
+│   │   └── update.py
+│   └── utils.py
+├── pytest.ini
+├── requirements.txt
+└── tests
+    ├── __init__.py
+    ├── conftest.py
+    ├── test_producer.py
+    └── test_types.py
 ```
 
 ## Installation
