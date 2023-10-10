@@ -1,3 +1,4 @@
+import psycopg2
 import pytest
 from unittest import mock
 
@@ -49,17 +50,42 @@ def test_perform_action(producer_instance: Producer):
     assert 'This method should be overridden by subclass' in str(excinfo.value)
 
 
+# test __process_changes method
+def test_process_changes(event_producer_instance: EventProducer):
+    with mock.patch('concurrent.futures.ThreadPoolExecutor.submit') as mock_executor:
+        event_producer_instance._Producer__process_changes('test')
+    mock_executor.assert_called_once()
+
+
+# Test __create_replication_slot method
+def test_create_replication_slot(event_producer_instance: EventProducer):
+    mock_cursor = mock.MagicMock()
+    mock_cursor.execute = mock.MagicMock()
+
+    mock_conn = mock.MagicMock()
+    mock_conn.cursor.return_value = mock_cursor
+
+    with mock.patch('psycopg2.connect', return_value=mock_conn):
+        event_producer_instance.conn = mock_conn
+        event_producer_instance.cur = mock_cursor
+        mock_cursor.execute.side_effect = psycopg2.errors.DuplicateObject
+
+        with mock.patch('logging.debug') as mock_logging:
+            event_producer_instance._Producer__create_replication_slot('pgtest')
+
+        mock_logging.assert_called_once_with('Replication slot already exists')
+
+
 # Test __process_single_change method for insert payload
-def test_insert_process_single_change(producer_instance: Producer, insert_payload, mocked_schema):
+def test_insert_process_single_change(event_producer_instance: Producer, insert_payload, mocked_schema):
     with mock.patch('psycopg2.connect') as mock_conn:
         mock_con = mock_conn.return_value
         mock_cur = mock_con.cursor.return_value
         mock_cur.fetchall.return_value = mocked_schema
 
-        with pytest.raises(NotImplementedError) as excinfo:
-            producer_instance._Producer__process_single_change(insert_payload)
+        event_producer_instance._Producer__process_single_change(insert_payload)
 
-        assert 'This method should be overridden by subclass' in str(excinfo.value)
+        assert event_producer_instance.name == 'Test is successful'
 
 
 # Test __process_single_change method for update payload

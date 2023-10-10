@@ -6,11 +6,13 @@ from unittest.mock import patch
 from producer.process import Producer
 
 
+
 # Custom Producer class that implements the perform_action method
 class EventProducer(Producer):
     def perform_action(self, message_type: str, parsed_message: dict):
-        logging.debug(f'EventProducer - Message type: {message_type}')
         logging.debug(f'EventProducer - Parsed message: {parsed_message}')
+        logging.debug(f'EventProducer - Message type: {message_type}')
+        self.name = 'Test is successful'
 
 
 # Fixture for creating an instance of EventProducer
