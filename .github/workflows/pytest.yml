@@ -1,49 +1,48 @@
-name: Run Pytest with Coverage
+name: Run Pytest and Coverage
 
 on:
   push:
     branches:
-      - main 
-  pull_request:
-    branches:
       - main
+  pull_request:
+    types: [assigned, opened, synchronize, reopened]
 
 jobs:
-  test:
+  pytest:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      # Checkout the code from the repository
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.x'
+      # Setup Python environment
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
 
-    - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
+      # Install Python dependencies
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
-    - name: Run pytest with coverage
-      run: |
-        pytest --cov=. --cov-report=term-missing
+      # Run Pytest with coverage
+      - name: Run Tests
+        run: |
+          python -m pytest test/ --cov=. --junit-xml=test-reports/report.xml --cov-report=term-missing --cov-fail-under=95 | tee pytest-coverage.txt
+          echo "STATUS=$(grep 'Required test' pytest-coverage.txt | awk '{ print $1 }')" >> $GITHUB_ENV
+          echo "FAILED=$(awk -F'=' '/failures=/ {gsub(/"/, "", $2); print $2}' test-reports/report.xml)" >> $GITHUB_ENV
 
-    - name: Generate coverage report
-      run: |
-        coverage report > coverage.txt
+      # Post Pytest coverage as a comment on PR
+      - name: Pytest coverage comment
+        uses: MishaKav/pytest-coverage-comment@main
+        if: always() && github.ref != 'refs/heads/main'
+        with:
+          create-new-comment: true
+          pytest-coverage-path: ./pytest-coverage.txt
+          junitxml-path: ./test-reports/report.xml
 
-    - name: Post coverage report as comment
-      uses: actions/github-script@v5
-      with:
-        github-token: ${{secrets.GITHUB_TOKEN}}
-        script: |
-          const fs = require('fs');
-          const coverage = fs.readFileSync('coverage.txt', 'utf8');
-          const commentBody = `📊 **Coverage Report** 📊\n\`\`\`\n${coverage}\n\`\`\``;
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: commentBody
-          });
+      # Evaluate test and coverage results
+      - name: Evaluate Coverage
+        if: env.STATUS == 'FAIL' || env.FAILED > 0
+        run: exit 1
