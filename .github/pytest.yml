@@ -1,0 +1,49 @@
+name: Run Pytest with Coverage
+
+on:
+  push:
+    branches:
+      - main 
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+
+    - name: Run pytest with coverage
+      run: |
+        pytest --cov=. --cov-report=term-missing
+
+    - name: Generate coverage report
+      run: |
+        coverage report > coverage.txt
+
+    - name: Post coverage report as comment
+      uses: actions/github-script@v5
+      with:
+        github-token: ${{secrets.GITHUB_TOKEN}}
+        script: |
+          const fs = require('fs');
+          const coverage = fs.readFileSync('coverage.txt', 'utf8');
+          const commentBody = `📊 **Coverage Report** 📊\n\`\`\`\n${coverage}\n\`\`\``;
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: commentBody
+          });
