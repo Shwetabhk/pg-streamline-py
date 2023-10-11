@@ -6,7 +6,7 @@ from pgoutput_events import (
     UpdateMessage,
     DeleteMessage
 )
-from pgoutput_events.types.base import BaseMessage
+from pgoutput_events.parser.base import BaseMessage
 
 
 # Test InsertMessage decoding

@@ -1,19 +1,16 @@
 import json
 import logging
 from typing import Optional, Dict, Any
+from concurrent.futures import ThreadPoolExecutor
+
 import psycopg2
 from psycopg2.extras import LogicalReplicationConnection
 from psycopg2 import pool
-from concurrent.futures import ThreadPoolExecutor
 
-# Import custom message classes
-from pgoutput_events import (
-    InsertMessage,
-    UpdateMessage,
-    DeleteMessage
+from pgoutput_events.utils import (
+    setup_custom_logging,
+    Utils as parser_utils
 )
-
-from pgoutput_events.utils import setup_custom_logging
 
 
 class Producer:
@@ -45,6 +42,15 @@ class Producer:
         """Connect to the PostgreSQL database."""
         self.conn = self.conn_pool.getconn()
         self.cur = self.conn.cursor()
+    
+    @staticmethod
+    def __get_table_name(relation_id: int, cur: Optional[psycopg2.extensions.cursor]) -> str:
+        """Get the table name from the relation ID."""
+        cur.execute(
+            f"SELECT schemaname, relname FROM pg_stat_user_tables WHERE relid = {relation_id};"
+        )
+        schema_name, table_name = cur.fetchone()
+        return f'{schema_name}.{table_name}'
 
     def __create_replication_slot(self, slot_name: str) -> None:
         try:
@@ -60,36 +66,14 @@ class Producer:
             executor.submit(self.__process_single_change, data)
 
     def __process_single_change(self, data: Any) -> None:
-        message_type = data.payload[:1].decode('utf-8')
         connection = self.conn_pool.getconn()
         cursor = connection.cursor()
+        logging.info(f'Processing change: {data.payload}')
+        relation_id = parser_utils.convert_bytes_to_int(data.payload[1:5])
 
-        parsed_message = {}
+        table_name = self.__get_table_name(relation_id, cursor)
 
-        if message_type == 'I':
-            logging.info(f'INSERT Message, Message Type: {message_type} - {data.data_start}')
-            parser = InsertMessage(data.payload, cursor=cursor)
-            parsed_message = parser.decode_insert_message()
-
-        elif message_type == 'U':
-            logging.info(f'UPDATE Message, Message Type: {message_type} - {data.data_start}')
-            parser = UpdateMessage(data.payload, cursor=cursor)
-            parsed_message = parser.decode_update_message()
-
-        elif message_type == 'D':
-            logging.info(f'DELETE Message, Message Type: {message_type} - {data.data_start}')
-            parser = DeleteMessage(data.payload, cursor=cursor)
-            parsed_message = parser.decode_delete_message()
-
-        cursor.close()
-        self.conn_pool.putconn(connection)
-
-        if parsed_message:
-            logging.debug(f'Message type: {message_type}, parsed message: {json.dumps(parsed_message, indent=4)}')
-            self.perform_action(message_type, parsed_message)
-
-        if message_type in ('I', 'U', 'D'):
-            logging.info(f'Sending feedback, Message Type: {message_type} - {data.data_start}')
+        logging.info(f'Change occurred on table: {table_name}')
 
         self.cur.send_feedback(flush_lsn=data.data_start)
 
