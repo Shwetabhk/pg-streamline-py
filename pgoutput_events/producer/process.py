@@ -66,14 +66,25 @@ class Producer:
             executor.submit(self.__process_single_change, data)
 
     def __process_single_change(self, data: Any) -> None:
+        message_type = data.payload[:1].decode('utf-8')
+        relation_id = parser_utils.convert_bytes_to_int(data.payload[1:5])
         connection = self.conn_pool.getconn()
         cursor = connection.cursor()
-        logging.info(f'Processing change: {data.payload}')
-        relation_id = parser_utils.convert_bytes_to_int(data.payload[1:5])
 
-        table_name = self.__get_table_name(relation_id, cursor)
+        if message_type in ['I', 'U', 'D']:
+            logging.debug(f'Incoming message: {data.data_start}')
+            table_name = self.__get_table_name(relation_id, cursor)
+            
+            logging.info(f'Change occurred on table: {table_name}')
+            logging.info(f'Change occurred at LSN: {data.data_start}')
 
-        logging.info(f'Change occurred on table: {table_name}')
+            self.perform_action(table_name, data.payload)
+
+            logging.info(f'Change processed on table: {table_name}')
+            logging.info(f'Change processed at LSN: {data.data_start}')
+
+        cursor.close()
+        self.conn_pool.putconn(connection)
 
         self.cur.send_feedback(flush_lsn=data.data_start)
 
