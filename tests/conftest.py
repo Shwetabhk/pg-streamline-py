@@ -9,9 +9,9 @@ from pgoutput_events import Producer
 
 # Custom Producer class that implements the perform_action method
 class EventProducer(Producer):
-    def perform_action(self, message_type: str, parsed_message: dict):
-        logging.debug(f'EventProducer - Parsed message: {parsed_message}')
-        logging.debug(f'EventProducer - Message type: {message_type}')
+    def perform_action(self, table_name: str, data):
+        logging.debug(f'EventProducer - Table name: {table_name}')
+        logging.debug(f'EventProducer - Byte Data: {data}')
         self.name = 'Test is successful'
 
 
@@ -66,6 +66,7 @@ class OutputData:
 def insert_payload():
     data = OutputData()
     data.payload = b'I\x00\x00@9N\x00\x07t\x00\x00\x00$2ea2efd6-f0f1-4091-bce2-40dcdb8d2c5et\x00\x00\x00\x06Zapzapt\x00\x00\x00\x16johnboss2002@dummy.comt\x00\x00\x00\x11great_pass_authort\x00\x00\x00\x01tt\x00\x00\x00\x1a2023-10-09 13:13:47.929773t\x00\x00\x00\x1a2023-10-09 13:13:47.929773'
+    data.data_start = 124122
     return data
 
 # Fixture for expected insert response

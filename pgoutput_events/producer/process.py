@@ -1,11 +1,12 @@
-import json
+import signal
 import logging
+import sys
 from typing import Optional, Dict, Any
 from concurrent.futures import ThreadPoolExecutor
 
 import psycopg2
 from psycopg2.extras import LogicalReplicationConnection
-from psycopg2 import pool
+from psycopg2 import pool, OperationalError
 
 from pgoutput_events.utils import (
     setup_custom_logging,
@@ -13,10 +14,30 @@ from pgoutput_events.utils import (
 )
 
 
-class Producer:
-    """Class to handle PostgreSQL logical replication."""
+logger = logging.getLogger(__name__)
 
-    def __init__(self, pool_size: int = 5, **kwargs) -> None:
+
+class Producer:
+    """
+    Producer Class for handling PostgreSQL logical replication.
+
+    Attributes:
+        params (Dict[str, str]): Connection parameters for PostgreSQL database.
+        replication_slot (str): The name of the replication slot to use.
+        conn_pool: Connection pool for database connections.
+        replication_cursor: Cursor for logical replication.
+        output_plugin (str): The output plugin to use ('pgoutput' or 'wal2json').
+    """
+
+    def __init__(self, pool_size: int = 5, output_plugin: str = 'pgoutput', **kwargs) -> None:
+        """
+        Initialize the Producer class.
+
+        Args:
+            pool_size (int): The size of the connection pool.
+            output_plugin (str): The output plugin to use ('pgoutput' or 'wal2json').
+            **kwargs: Database connection parameters.
+        """
         setup_custom_logging()
 
         self.params: Dict[str, str] = {
@@ -28,78 +49,191 @@ class Producer:
             'connection_factory': LogicalReplicationConnection
         }
         self.replication_slot: str = kwargs.get('replication_slot')
+        self.output_plugin = output_plugin
         self.conn_pool = pool.SimpleConnectionPool(1, pool_size, **self.params)
-        self.conn: Optional[psycopg2.extensions.connection] = None
-        self.cur: Optional[psycopg2.extensions.cursor] = None
 
-        self.__connect()
+        connection = self.conn_pool.getconn()
+        self.replication_cursor = connection.cursor()
+
         self.__create_replication_slot(self.replication_slot)
 
-        logging.info(f'Producer initialized for database: {kwargs.get("dbname")} on host: {kwargs.get("host")}:{kwargs.get("port")}')
-        logging.info(f'Using replication slot: {self.replication_slot}')
+        logger.info(f'Producer initialized for database: {kwargs.get("dbname")} on host: {kwargs.get("host")}:{kwargs.get("port")}')
+        logger.info(f'Using replication slot: {self.replication_slot}')
+        logger.info(f'Using output plugin: {self.output_plugin}')
 
-    def __connect(self) -> None:
-        """Connect to the PostgreSQL database."""
-        self.conn = self.conn_pool.getconn()
-        self.cur = self.conn.cursor()
-    
-    @staticmethod
-    def __get_table_name(relation_id: int, cur: Optional[psycopg2.extensions.cursor]) -> str:
-        """Get the table name from the relation ID."""
-        cur.execute(
-            f"SELECT schemaname, relname FROM pg_stat_user_tables WHERE relid = {relation_id};"
-        )
-        schema_name, table_name = cur.fetchone()
-        return f'{schema_name}.{table_name}'
+        signal.signal(signal.SIGINT, self.__terminate)
+
+    def __terminate(self, *args):
+        """
+        Terminate the replication process.
+
+        Args:
+            signum (int): Signal number.
+            frame (frame): Current stack frame.
+        """
+        logger.info('Terminating replication process')
+
+        self.replication_cursor.close()
+        self.conn_pool.closeall()
+
+        logger.info('Replication process terminated')
+
+        # Exiting the process gracefully
+        sys.exit(0)
 
     def __create_replication_slot(self, slot_name: str) -> None:
+        """
+        Create a new logical replication slot.
+
+        Args:
+            slot_name (str): The name of the replication slot to create.
+        """
         try:
-            self.cur.execute(
-                f"SELECT pg_create_logical_replication_slot('{slot_name}', 'pgoutput');"
+            connection = self.conn_pool.getconn()
+            cursor = connection.cursor()
+            cursor.execute(
+                "select pg_create_logical_replication_slot(%s, %s);",
+                (slot_name, self.output_plugin)
             )
-            logging.debug('Replication slot created')
+            logger.debug('Replication slot created')
+            self.__close_connection(cursor, connection)
         except psycopg2.errors.DuplicateObject:
-            logging.debug('Replication slot already exists')
+            logger.debug('Replication slot already exists')
+        except OperationalError:
+            logger.exception("Operational error during initialization.")
+            raise
+    
+    def __close_connection(self, cursor, connection):
+        """
+        Close the connection and cursor.
 
-    def __process_changes(self, data: Any) -> None:
-        with ThreadPoolExecutor() as executor:
-            executor.submit(self.__process_single_change, data)
-
-    def __process_single_change(self, data: Any) -> None:
-        message_type = data.payload[:1].decode('utf-8')
-        relation_id = parser_utils.convert_bytes_to_int(data.payload[1:5])
-        connection = self.conn_pool.getconn()
-        cursor = connection.cursor()
-
-        if message_type in ['I', 'U', 'D']:
-            logging.debug(f'Incoming message: {data.data_start}')
-            table_name = self.__get_table_name(relation_id, cursor)
-            
-            logging.info(f'Change occurred on table: {table_name}')
-            logging.info(f'Change occurred at LSN: {data.data_start}')
-
-            self.perform_action(table_name, data.payload)
-
-            logging.info(f'Change processed on table: {table_name}')
-            logging.info(f'Change processed at LSN: {data.data_start}')
-
+        Args:
+            cursor (psycopg2.extensions.cursor): Database cursor.
+            connection (psycopg2.extensions.connection): Database connection.
+        """
         cursor.close()
         self.conn_pool.putconn(connection)
 
-        self.cur.send_feedback(flush_lsn=data.data_start)
+    def __get_table_name(self, relation_id: int, cur: Optional[psycopg2.extensions.cursor]) -> str:
+        """
+        Get the table name using the relation ID.
 
-    def perform_action(self, message_type: str, parsed_message: dict):
-        logging.debug(f'Message type: {message_type}')
-        logging.debug(f'Parsed message: {json.dumps(parsed_message, indent=4)}')
+        Args:
+            relation_id (int): The relation ID of the table.
+            cur (Optional[psycopg2.extensions.cursor]): Database cursor.
+
+        Returns:
+            str: Full table name including schema.
+        """
+        try:
+            cur.execute(
+                "select schemaname, relname from pg_stat_user_tables where relid = %s;",
+                (relation_id,)
+            )
+            schema_name, table_name = cur.fetchone()
+            return f'{schema_name}.{table_name}'
+        except Exception:
+            logger.exception("Failed to get table name.")
+            raise
+    
+    def send_feedback(self, flush_lsn: int) -> None:
+        """
+        Send feedback to the PostgreSQL server.
+
+        Args:
+            flush_lsn (int): The LSN to send feedback for.
+        """
+        self.replication_cursor.send_feedback(flush_lsn=flush_lsn)
+
+    def __process_wal2json_change(self, data: Any) -> None:
+        """
+        Process a single change event for plugin wal2json.
+
+        Args:
+            data (Any): The incoming data to process.
+        """
+        self.perform_action('wal2json', data.payload)
+        self.send_feedback(flush_lsn=data.data_start)
+
+    def __process_pgoutput_change(self, data: Any) -> None:
+        """
+        Process a single change event for plugin pgoutput.
+
+        Args:
+            data (Any): The incoming data to process.
+        """
+        connection = self.conn_pool.getconn()
+        cursor = connection.cursor()
+
+        try:
+            message_type = data.payload[:1].decode('utf-8')
+            relation_id = parser_utils.convert_bytes_to_int(data.payload[1:5])
+            if message_type in ['I', 'U', 'D']:
+                operation_type = 'INSERT' if message_type == 'I' else 'UPDATE' if message_type == 'U' else 'DELETE'
+                table_name = self.__get_table_name(relation_id, cursor)
+                print(table_name)
+
+                logger.info(f'{operation_type} Change occurred on table: {table_name}')
+                logger.info(f'{operation_type} Change occurred at LSN: {data.data_start}')
+                print(data.payload)
+                self.perform_action(table_name, data.payload)
+
+                logger.info(f'{operation_type} Change processed on table: {table_name}')
+                logger.info(f'{operation_type} Change processed at LSN: {data.data_start}')
+
+            self.send_feedback(flush_lsn=data.data_start)
+            self.__close_connection(cursor, connection)
+        except Exception:
+            logger.exception("Failed to process change.")
+            self.send_feedback(flush_lsn=data.data_start)
+            self.__close_connection(cursor, connection)
+            raise
+
+    def __process_changes(self, data: Any) -> None:
+        """
+        Process a single change event.
+
+        Args:
+            data (Any): The incoming data to process.
+        """
+        with ThreadPoolExecutor() as executor:
+            if self.output_plugin == 'pgoutput':
+                executor.submit(self.__process_pgoutput_change, data)
+            elif self.output_plugin == 'wal2json':
+                executor.submit(self.__process_wal2json_change, data)
+
+    def perform_action(self, table_name: str, bytes_message: dict):
+        """
+        Perform an action based on the table name and parsed message.
+
+        Args:
+            table_name (str): The name of the table.
+            bytes_message (dict): The parsed message.
+
+        Raises:
+            NotImplementedError: This method should be overridden by subclass.
+        """
+        logger.debug(f'Table name: {table_name}')
+        logger.debug(f'Byte Data: {bytes_message}')
 
         raise NotImplementedError('This method should be overridden by subclass')
 
-    def start_replication(self, publication_names: str, protocol_version: str) -> None:
-        self.cur.close()
-        self.cur = self.conn.cursor()
-        self.cur.start_replication(slot_name=self.replication_slot, decode=False, options={
-            'publication_names': ','.join(publication_names),
-            'proto_version': protocol_version
-        })
-        logging.info(f'Starting replication with publications: {publication_names} and protocol version: {protocol_version}')
-        self.cur.consume_stream(self.__process_changes)
+    def start_replication(self, publication_names: list, protocol_version: str) -> None:
+        """
+        Start the logical replication process.
+
+        Args:
+            publication_names (str): The names of the publications to replicate.
+            protocol_version (str): The protocol version to use.
+        """
+        options = {}
+
+        if self.output_plugin == 'pgoutput':
+            options = {
+                'proto_version': protocol_version,
+                'publication_names': ','.join(publication_names)
+            }
+            logger.info(f'Starting replication with publications: {publication_names} and protocol version: {protocol_version}')
+
+        self.replication_cursor.start_replication(slot_name=self.replication_slot, decode=False, options=options)
+        self.replication_cursor.consume_stream(self.__process_changes)

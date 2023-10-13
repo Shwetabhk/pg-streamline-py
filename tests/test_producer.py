@@ -18,8 +18,7 @@ def test_producer_init():
             'replication_slot': 'pgtest'
         }
         producer = Producer(pool_size=5, **params)
-        assert producer.conn is not None
-        assert producer.cur is not None
+        assert producer.replication_cursor is not None
         assert producer.replication_slot == 'pgtest'
 
 
@@ -34,20 +33,41 @@ def test_start_replication(event_producer_instance: EventProducer):
 
     with mock.patch('psycopg2.connect', return_value=mock_conn):
         event_producer_instance.conn = mock_conn
-        event_producer_instance.cur = mock_cursor
+        event_producer_instance.replication_cursor = mock_cursor
+
         event_producer_instance.start_replication(publication_names=['events'], protocol_version='4')
 
     mock_cursor.start_replication.assert_called_once()
 
 
 # Test perform_action method
-def test_perform_action(producer_instance: Producer):
+def test_perform_action(producer_instance: Producer, update_payload):
     with pytest.raises(NotImplementedError) as excinfo:
         producer_instance.perform_action(
-            message_type='I',
-            parsed_message={'message_type': 'I', 'relation_id': 1, 'new': {'id': 1, 'name': 'test'}}
+            table_name='public.test',
+            bytes_message=update_payload
         )
     assert 'This method should be overridden by subclass' in str(excinfo.value)
+
+
+# Test __process_pgoutput_change method
+def test_process_pgoutput_change(event_producer_instance: EventProducer, insert_payload):
+    mock_cursor = mock.MagicMock()
+    mock_cursor.execute = mock.MagicMock()
+
+    mock_conn = mock.MagicMock()
+    mock_conn.cursor.return_value = mock_cursor
+
+    with mock.patch('psycopg2.connect', return_value=mock_conn):
+        event_producer_instance.conn = mock_conn
+        event_producer_instance.cur = mock_cursor
+        mock_cursor.fetchone.return_value = ('public', 'users')
+
+        with mock.patch('pgoutput_events.producer.process.logger.info') as mock_logging:
+            event_producer_instance._Producer__process_pgoutput_change(insert_payload)
+
+        # assert that mocker is called 4 times
+        mock_logging.assert_called()
 
 
 # test __process_changes method
@@ -70,10 +90,30 @@ def test_create_replication_slot(event_producer_instance: EventProducer):
         event_producer_instance.cur = mock_cursor
         mock_cursor.execute.side_effect = psycopg2.errors.DuplicateObject
 
-        with mock.patch('logging.debug') as mock_logging:
+        with mock.patch('pgoutput_events.producer.process.logger.debug') as mock_logging:
             event_producer_instance._Producer__create_replication_slot('pgtest')
 
         mock_logging.assert_called_once_with('Replication slot already exists')
+
+
+# Test __create_replication_slot method
+def test_terminate(event_producer_instance: EventProducer):
+    mock_cursor = mock.MagicMock()
+    mock_cursor.execute = mock.MagicMock()
+
+    mock_conn = mock.MagicMock()
+    mock_conn.cursor.return_value = mock_cursor
+
+    with mock.patch('psycopg2.connect', return_value=mock_conn):
+        event_producer_instance.conn = mock_conn
+        event_producer_instance.cur = mock_cursor
+        mock_cursor.execute.side_effect = psycopg2.errors.DuplicateObject
+
+        with mock.patch('pgoutput_events.producer.process.logger.debug') as mock_logging:
+            with (mock.patch('sys.exit')) as mock_exit:
+                event_producer_instance._Producer__terminate(1, 2)
+
+            mock_exit.assert_called_once()
 
 
 # Test __process_single_change method for insert payload
