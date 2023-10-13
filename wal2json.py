@@ -7,9 +7,9 @@ from pgoutput_events import Producer  # Importing the Producer class from the pr
 logging.basicConfig(level=logging.INFO)
 
 
-class PGWal2JSONEventProducer(Producer):
+class PGWal2JSONPGOutputProducer(Producer):
     """
-    EventProducer class that extends the Producer class to handle specific types of messages.
+    PGOutputProducer class that extends the Producer class to handle specific types of messages.
     """
 
     def perform_action(self, message_type: str, parsed_message: dict):
@@ -42,8 +42,8 @@ if __name__ == '__main__':
         'replication_slot': 'wal2json_test_bench'
     }
 
-    # Creating an instance of EventProducer with a pool size of 5
-    producer = PGWal2JSONEventProducer(pool_size=5, output_plugin='wal2json', **params)
+    # Creating an instance of PGOutputProducer with a pool size of 5
+    producer = PGWal2JSONPGOutputProducer(pool_size=5, output_plugin='wal2json', **params)
 
     # Starting the replication process
     producer.start_replication(publication_names=['events'], protocol_version='4')

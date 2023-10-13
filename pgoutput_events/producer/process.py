@@ -152,8 +152,15 @@ class Producer:
         Args:
             data (Any): The incoming data to process.
         """
-        self.perform_action('wal2json', data.payload)
-        self.send_feedback(flush_lsn=data.data_start)
+        try:
+            logger.info(f'Change occurred at LSN: {data.data_start}')
+            self.perform_action('wal2json', data.payload)
+            self.send_feedback(flush_lsn=data.data_start)
+            logger.info(f'Change processed at LSN: {data.data_start}')
+        except Exception:
+            logger.exception("Failed to process change.")
+            self.send_feedback(flush_lsn=data.data_start)
+            raise Exception("Failed to process change.")
 
     def __process_pgoutput_change(self, data: Any) -> None:
         """
@@ -187,7 +194,7 @@ class Producer:
             logger.exception("Failed to process change.")
             self.send_feedback(flush_lsn=data.data_start)
             self.__close_connection(cursor, connection)
-            raise
+            raise Exception("Failed to process change.")
 
     def __process_changes(self, data: Any) -> None:
         """

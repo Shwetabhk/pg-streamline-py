@@ -8,16 +8,16 @@ from pgoutput_events import Producer
 
 
 # Custom Producer class that implements the perform_action method
-class EventProducer(Producer):
+class PGOutputProducer(Producer):
     def perform_action(self, table_name: str, data):
-        logging.debug(f'EventProducer - Table name: {table_name}')
-        logging.debug(f'EventProducer - Byte Data: {data}')
+        logging.debug(f'PGOutputProducer - Table name: {table_name}')
+        logging.debug(f'PGOutputProducer - Byte Data: {data}')
         self.name = 'Test is successful'
 
 
-# Fixture for creating an instance of EventProducer
+# Fixture for creating an instance of PGOutputProducer
 @pytest.fixture
-def event_producer_instance():
+def pgo_producer_instance():
     with patch('psycopg2.connect'):
         params = {
             'dbname': 'test_db',
@@ -27,7 +27,31 @@ def event_producer_instance():
             'port': '5432',
             'replication_slot': 'test_slot'
         }
-        return EventProducer(pool_size=5, **params)
+        return PGOutputProducer(pool_size=5, **params)
+
+
+# Custom Producer class that implements the perform_action method
+class Wal2jsonProducer(Producer):
+    def perform_action(self, table_name: str, data):
+        logging.debug(f'PGOutputProducer - Table name: {table_name}')
+        logging.debug(f'PGOutputProducer - Byte Data: {data}')
+        self.name = 'Test is successful'
+
+
+# Fixture for creating an instance of PGOutputProducer
+@pytest.fixture
+def wal2json_producer_instance():
+    with patch('psycopg2.connect'):
+        params = {
+            'dbname': 'test_db',
+            'user': 'test_user',
+            'password': 'test_password',
+            'host': 'localhost',
+            'port': '5432',
+            'replication_slot': 'test_slot'
+        }
+        return Wal2jsonProducer(pool_size=5, output_plugin='wal2json', **params)
+
 
 # Fixture for creating an instance of Producer
 @pytest.fixture

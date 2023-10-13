@@ -7,9 +7,9 @@ from pgoutput_events import Producer  # Importing the Producer class from the pr
 logging.basicConfig(level=logging.INFO)
 
 
-class PGOutputEventProducer(Producer):
+class PGOutputPGOutputProducer(Producer):
     """
-    EventProducer class that extends the Producer class to handle specific types of messages.
+    PGOutputProducer class that extends the Producer class to handle specific types of messages.
     """
 
     def perform_action(self, table_name: str, data: dict):
@@ -33,8 +33,8 @@ if __name__ == '__main__':
         'replication_slot': 'pgtest'
     }
 
-    # Creating an instance of EventProducer with a pool size of 5
-    producer = PGOutputEventProducer(pool_size=5, **params)
+    # Creating an instance of PGOutputProducer with a pool size of 5
+    producer = PGOutputPGOutputProducer(pool_size=5, **params)
 
     # Starting the replication process
     producer.start_replication(publication_names=['events'], protocol_version='4')
