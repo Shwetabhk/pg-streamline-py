@@ -3,21 +3,21 @@ import logging
 import pytest
 from unittest.mock import patch
 
-from pgoutput_events import Producer
+from pgoutput_events import Producer, Consumer
 
 
 
 # Custom Producer class that implements the perform_action method
-class EventProducer(Producer):
-    def perform_action(self, message_type: str, parsed_message: dict):
-        logging.debug(f'EventProducer - Parsed message: {parsed_message}')
-        logging.debug(f'EventProducer - Message type: {message_type}')
+class PGOutputProducer(Producer):
+    def perform_action(self, table_name: str, data):
+        logging.debug(f'PGOutputProducer - Table name: {table_name}')
+        logging.debug(f'PGOutputProducer - Byte Data: {data}')
         self.name = 'Test is successful'
 
 
-# Fixture for creating an instance of EventProducer
+# Fixture for creating an instance of PGOutputProducer
 @pytest.fixture
-def event_producer_instance():
+def pgo_producer_instance():
     with patch('psycopg2.connect'):
         params = {
             'dbname': 'test_db',
@@ -27,7 +27,31 @@ def event_producer_instance():
             'port': '5432',
             'replication_slot': 'test_slot'
         }
-        return EventProducer(pool_size=5, **params)
+        return PGOutputProducer(pool_size=5, **params)
+
+
+# Custom Producer class that implements the perform_action method
+class Wal2jsonProducer(Producer):
+    def perform_action(self, table_name: str, data):
+        logging.debug(f'PGOutputProducer - Table name: {table_name}')
+        logging.debug(f'PGOutputProducer - Byte Data: {data}')
+        self.name = 'Test is successful'
+
+
+# Fixture for creating an instance of PGOutputProducer
+@pytest.fixture
+def wal2json_producer_instance():
+    with patch('psycopg2.connect'):
+        params = {
+            'dbname': 'test_db',
+            'user': 'test_user',
+            'password': 'test_password',
+            'host': 'localhost',
+            'port': '5432',
+            'replication_slot': 'test_slot'
+        }
+        return Wal2jsonProducer(pool_size=5, output_plugin='wal2json', **params)
+
 
 # Fixture for creating an instance of Producer
 @pytest.fixture
@@ -42,6 +66,41 @@ def producer_instance():
             'replication_slot': 'test_slot'
         }
         return Producer(pool_size=5, **params)
+
+
+# Custom Consumer class that implements the perform_action method
+class TestConsumer(Consumer):
+    def perform_action(self, message_type: str, parsed_message: dict) -> None:
+        logging.debug(f'TestConsumer - Parsed message: {parsed_message}')
+        logging.debug(f'TestConsumer - Message type: {message_type}')
+        self.name = 'Test is successful'
+
+
+@pytest.fixture
+def test_consumer_instance():
+    with patch('psycopg2.connect'):
+        params = {
+            'dbname': 'test_db',
+            'user': 'test_user',
+            'password': 'test_password',
+            'host': 'localhost',
+            'port': '5432'
+        }
+        return TestConsumer(pool_size=5, **params)
+
+
+@pytest.fixture
+def consumer_instance():
+    with patch('psycopg2.connect'):
+        params = {
+            'dbname': 'test_db',
+            'user': 'test_user',
+            'password': 'test_password',
+            'host': 'localhost',
+            'port': '5432'
+        }
+        return Consumer(pool_size=5, **params)
+
 
 # Fixture for mocking the schema
 @pytest.fixture
@@ -66,6 +125,7 @@ class OutputData:
 def insert_payload():
     data = OutputData()
     data.payload = b'I\x00\x00@9N\x00\x07t\x00\x00\x00$2ea2efd6-f0f1-4091-bce2-40dcdb8d2c5et\x00\x00\x00\x06Zapzapt\x00\x00\x00\x16johnboss2002@dummy.comt\x00\x00\x00\x11great_pass_authort\x00\x00\x00\x01tt\x00\x00\x00\x1a2023-10-09 13:13:47.929773t\x00\x00\x00\x1a2023-10-09 13:13:47.929773'
+    data.data_start = 124122
     return data
 
 # Fixture for expected insert response

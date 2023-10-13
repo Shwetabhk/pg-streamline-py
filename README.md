@@ -23,7 +23,7 @@
 │   │   ├── PRODUCER.md
 │   │   ├── __init__.py
 │   │   └── process.py
-│   ├── types
+│   ├── parser
 │   │   ├── __init__.py
 │   │   ├── base.py
 │   │   ├── delete.py
@@ -36,7 +36,7 @@
     ├── __init__.py
     ├── conftest.py
     ├── test_producer.py
-    └── test_types.py
+    └── test_parser.py
 ```
 
 ## Installation

@@ -1,7 +1,8 @@
 # .coveragerc
 [run]
 omit =
-    main.py
+    wal2json.py
+    pgoutput.py
     tests/*
     */__init__.py
 
