@@ -101,7 +101,7 @@ class Producer:
             logger.debug('Replication slot already exists')
         except OperationalError:
             logger.exception("Operational error during initialization.")
-            raise
+            raise OperationalError("Operational error during initialization.")
     
     def __close_connection(self, cursor, connection):
         """

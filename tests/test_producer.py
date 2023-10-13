@@ -94,6 +94,17 @@ def test_create_replication_slot(event_producer_instance: EventProducer):
             event_producer_instance._Producer__create_replication_slot('pgtest')
 
         mock_logging.assert_called_once_with('Replication slot already exists')
+    
+    # Test OperationError exception
+    with mock.patch('psycopg2.connect', return_value=mock_conn):
+        event_producer_instance.conn = mock_conn
+        event_producer_instance.cur = mock_cursor
+        mock_cursor.execute.side_effect = psycopg2.errors.OperationalError
+       
+        with pytest.raises(psycopg2.errors.OperationalError) as excinfo:
+            event_producer_instance._Producer__create_replication_slot('pgtest')
+
+        assert 'Operational error during initialization.' in str(excinfo.value)
 
 
 # Test __create_replication_slot method
