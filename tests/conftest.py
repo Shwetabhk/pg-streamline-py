@@ -3,7 +3,7 @@ import logging
 import pytest
 from unittest.mock import patch
 
-from pgoutput_events import Producer
+from pgoutput_events import Producer, Consumer
 
 
 
@@ -66,6 +66,41 @@ def producer_instance():
             'replication_slot': 'test_slot'
         }
         return Producer(pool_size=5, **params)
+
+
+# Custom Consumer class that implements the perform_action method
+class TestConsumer(Consumer):
+    def perform_action(self, message_type: str, parsed_message: dict) -> None:
+        logging.debug(f'TestConsumer - Parsed message: {parsed_message}')
+        logging.debug(f'TestConsumer - Message type: {message_type}')
+        self.name = 'Test is successful'
+
+
+@pytest.fixture
+def test_consumer_instance():
+    with patch('psycopg2.connect'):
+        params = {
+            'dbname': 'test_db',
+            'user': 'test_user',
+            'password': 'test_password',
+            'host': 'localhost',
+            'port': '5432'
+        }
+        return TestConsumer(pool_size=5, **params)
+
+
+@pytest.fixture
+def consumer_instance():
+    with patch('psycopg2.connect'):
+        params = {
+            'dbname': 'test_db',
+            'user': 'test_user',
+            'password': 'test_password',
+            'host': 'localhost',
+            'port': '5432'
+        }
+        return Consumer(pool_size=5, **params)
+
 
 # Fixture for mocking the schema
 @pytest.fixture

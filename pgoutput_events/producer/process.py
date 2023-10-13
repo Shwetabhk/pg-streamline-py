@@ -178,11 +178,10 @@ class Producer:
             if message_type in ['I', 'U', 'D']:
                 operation_type = 'INSERT' if message_type == 'I' else 'UPDATE' if message_type == 'U' else 'DELETE'
                 table_name = self.__get_table_name(relation_id, cursor)
-                print(table_name)
 
                 logger.info(f'{operation_type} Change occurred on table: {table_name}')
                 logger.info(f'{operation_type} Change occurred at LSN: {data.data_start}')
-                print(data.payload)
+
                 self.perform_action(table_name, data.payload)
 
                 logger.info(f'{operation_type} Change processed on table: {table_name}')
