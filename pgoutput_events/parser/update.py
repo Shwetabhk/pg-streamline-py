@@ -16,6 +16,7 @@ class UpdateMessage(BaseMessage):
         :return: A dictionary containing the differences.
         """
         diff = {}
+
         for key in old_tuple_values.keys():
             if old_tuple_values[key] != new_tuple_values[key]:
                 diff[key] = {

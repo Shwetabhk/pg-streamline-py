@@ -63,6 +63,12 @@ class Producer:
 
         signal.signal(signal.SIGINT, self.__terminate)
 
+    def perform_termination(self) -> None:
+        """
+        Perform termination of the replication process.
+        """
+        raise NotImplementedError('You must implement the perform_termination method in your producer class.')
+
     def __terminate(self, *args):
         """
         Terminate the replication process.
@@ -78,6 +84,7 @@ class Producer:
 
         logger.info('Replication process terminated')
 
+        self.perform_termination()
         # Exiting the process gracefully
         sys.exit(0)
 
