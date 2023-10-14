@@ -145,8 +145,14 @@ def test_terminate(pgo_producer_instance: PGOutputProducer):
         pgo_producer_instance.cur = mock_cursor
         mock_cursor.execute.side_effect = psycopg2.errors.DuplicateObject
 
-        with mock.patch('pgoutput_events.producer.process.logger.debug') as mock_logging:
+        with mock.patch('pgoutput_events.producer.process.logger.debug'):
             with (mock.patch('sys.exit')) as mock_exit:
                 pgo_producer_instance._Producer__terminate(1, 2)
 
             mock_exit.assert_called_once()
+
+# Test perform_termination method
+def test_perform_termination(producer_instance: Producer):
+    with pytest.raises(NotImplementedError) as excinfo:
+        producer_instance.perform_termination()
+    assert 'You must implement the perform_termination method in your producer class' in str(excinfo.value)

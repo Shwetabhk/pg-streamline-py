@@ -13,6 +13,9 @@ class PGOutputProducer(Producer):
         logging.debug(f'PGOutputProducer - Table name: {table_name}')
         logging.debug(f'PGOutputProducer - Byte Data: {data}')
         self.name = 'Test is successful'
+    
+    def perform_termination(self) -> None:
+        pass
 
 
 # Fixture for creating an instance of PGOutputProducer
@@ -69,15 +72,18 @@ def producer_instance():
 
 
 # Custom Consumer class that implements the perform_action method
-class TestConsumer(Consumer):
+class ExtendedConsumer(Consumer):
     def perform_action(self, message_type: str, parsed_message: dict) -> None:
-        logging.debug(f'TestConsumer - Parsed message: {parsed_message}')
-        logging.debug(f'TestConsumer - Message type: {message_type}')
+        logging.debug(f'ExtendedConsumer - Parsed message: {parsed_message}')
+        logging.debug(f'ExtendedConsumer - Message type: {message_type}')
         self.name = 'Test is successful'
+    
+    def perform_termination(self) -> None:
+        pass
 
 
 @pytest.fixture
-def test_consumer_instance():
+def extended_consumer_instance():
     with patch('psycopg2.connect'):
         params = {
             'dbname': 'test_db',
@@ -86,7 +92,7 @@ def test_consumer_instance():
             'host': 'localhost',
             'port': '5432'
         }
-        return TestConsumer(pool_size=5, **params)
+        return ExtendedConsumer(pool_size=5, **params)
 
 
 @pytest.fixture
