@@ -23,7 +23,7 @@ pgStreamline is a Python library designed to simplify and streamline the process
 ### Installation
 
 ```bash
-pip install pgStreamline
+pip install pg-streamline
 ```
 
 ## Features
