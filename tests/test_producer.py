@@ -3,7 +3,7 @@ import pytest
 from unittest import mock
 
 from .conftest import PGOutputProducer, Wal2jsonProducer
-from pgoutput_events import Producer
+from pg_streamline import Producer
 
 
 # Test initialization of Producer
@@ -63,7 +63,7 @@ def test_process_pgoutput_change(pgo_producer_instance: PGOutputProducer, insert
         pgo_producer_instance.cur = mock_cursor
         mock_cursor.fetchone.return_value = ('public', 'users')
 
-        with mock.patch('pgoutput_events.producer.process.logger.info') as mock_logging:
+        with mock.patch('pg_streamline.producer.process.logger.info') as mock_logging:
             pgo_producer_instance._Producer__process_pgoutput_change(insert_payload)
 
         # assert that mocker is called
@@ -78,7 +78,7 @@ def test_process_pgoutput_change(pgo_producer_instance: PGOutputProducer, insert
 
 
 def test_process_wal2json_change(wal2json_producer_instance: Wal2jsonProducer, insert_payload):
-    with mock.patch('pgoutput_events.producer.process.logger.info') as mock_logging:
+    with mock.patch('pg_streamline.producer.process.logger.info') as mock_logging:
         wal2json_producer_instance._Producer__process_wal2json_change(insert_payload)
 
         assert mock_logging.call_count == 2
@@ -115,7 +115,7 @@ def test_create_replication_slot(pgo_producer_instance: PGOutputProducer):
         pgo_producer_instance.cur = mock_cursor
         mock_cursor.execute.side_effect = psycopg2.errors.DuplicateObject
 
-        with mock.patch('pgoutput_events.producer.process.logger.debug') as mock_logging:
+        with mock.patch('pg_streamline.producer.process.logger.debug') as mock_logging:
             pgo_producer_instance._Producer__create_replication_slot('pgtest')
 
         mock_logging.assert_called_once_with('Replication slot already exists')
@@ -145,8 +145,14 @@ def test_terminate(pgo_producer_instance: PGOutputProducer):
         pgo_producer_instance.cur = mock_cursor
         mock_cursor.execute.side_effect = psycopg2.errors.DuplicateObject
 
-        with mock.patch('pgoutput_events.producer.process.logger.debug') as mock_logging:
+        with mock.patch('pg_streamline.producer.process.logger.debug'):
             with (mock.patch('sys.exit')) as mock_exit:
                 pgo_producer_instance._Producer__terminate(1, 2)
 
             mock_exit.assert_called_once()
+
+# Test perform_termination method
+def test_perform_termination(producer_instance: Producer):
+    with pytest.raises(NotImplementedError) as excinfo:
+        producer_instance.perform_termination()
+    assert 'You must implement the perform_termination method in your producer class' in str(excinfo.value)

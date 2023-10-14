@@ -1,94 +1,77 @@
-# pgoutput-events
+# pg-streamline-py
 
-## Overview
+## Streamlining PostgreSQL Logical Replication and Event Processing
 
-`pgoutput-events` is a Python-based PostgreSQL logical replication consumer. It listens to changes in the PostgreSQL database and processes INSERT, UPDATE, and DELETE events.
+pgStreamline is a Python library designed to simplify and streamline the process of logical replication and event processing with PostgreSQL. It provides modular components for producers, consumers, parsers, and plugins, making it highly extensible and customizable.
+
+---
+
+### Table of Contents
+
+1. [Installation](#installation)
+2. [Features](#features)
+3. [Usage](#usage)
+   - [Producer](#producer)
+   - [Consumer](#consumer)
+   - [Parser](#parser)
+   - [Plugins](#plugins)
+4. [Contributing](#contributing)
+5. [License](#license)
+
+---
+
+### Installation
+
+```bash
+pip install pgStreamline
+```
 
 ## Features
 
-- Supports PostgreSQL logical replication
-- Decodes INSERT, UPDATE, and DELETE messages according to https://www.postgresql.org/docs/16/protocol-logicalrep-message-formats.html
-- Extensible for custom actions
-- Built-in logging
+### Producer
 
-## Directory Structure
+- Handles PostgreSQL logical replication.
+- Supports multiple output plugins like 'pgoutput' and 'wal2json'.
+- Pooling support for better performance.
 
-```plaintext
-├── LICENSE
-├── README.md
-├── main.py
-├── pgoutput_events
-│   ├── __init__.py
-│   ├── producer
-│   │   ├── PRODUCER.md
-│   │   ├── __init__.py
-│   │   └── process.py
-│   ├── parser
-│   │   ├── __init__.py
-│   │   ├── base.py
-│   │   ├── delete.py
-│   │   ├── insert.py
-│   │   └── update.py
-│   └── utils.py
-├── pytest.ini
-├── requirements.txt
-└── tests
-    ├── __init__.py
-    ├── conftest.py
-    ├── test_producer.py
-    └── test_parser.py
-```
+For more details, see the [Producer README](./pg_streamline/producer/README.md).
 
-## Installation
+### Consumer
 
-1. Clone the repository:
+- Consumes and processes the events replicated by the producer.
+- Extensible: Can be extended to perform custom actions when specific database changes occur.
 
-    ```bash
-    git clone https://github.com/shwetabhk/pgoutput-parser.git
-    ```
+For more details, see the [Consumer README](./pg_streamline/consumer/README.md).
 
-2. Navigate to the project directory:
+### Parser
 
-    ```bash
-    cd pgoutput-parser
-    ```
+- Parses different types of logical events from PostgreSQL.
+- Supports parsing of INSERT, UPDATE, and DELETE events.
+- Makes it easier to understand and act upon the changes in the database.
 
-3. Install the required packages:
+For more details, see the [Parser README](./pg_streamline/parser/README.md).
 
-    ```bash
-    pip install -r requirements.txt
-    ```
+### Plugins
+
+- Extend the functionality of pgStreamline with various plugins.
+- Currently supports RabbitMQ for message queuing.
+- More plugins are in development.
+
+For more details, see the [Plugins README](./pg_streamline/plugins/README.md).
 
 ## Usage
 
-### Basic Usage
+Please refer to the README files in each module's directory for specific usage instructions:
 
-1. Update the `main.py` with your PostgreSQL database credentials and replication slot.
-
-2. Run the `main.py` script:
-
-    ```bash
-    python main.py
-    ```
-
-### Extending the Producer
-
-You can extend the `Producer` class to perform custom actions for each type of database event. See `PRODUCER.md` for more details.
-
-## Logging
-
-Logging is configured to output messages to the console. You can change the logging level by modifying the `logging.basicConfig` in your custom producer class.
-
-## Dependencies
-
-- Python 3.8+
-- psycopg2
-- PostgreSQL 11+
+- [Producer Usage](./pg_streamline/producer/README.md)
+- [Consumer Usage](./pg_streamline/consumer/README.md)
+- [Parser Usage](./pg_streamline/parser/README.md)
+- [Plugins Usage](./pg_streamline/plugins/README.md)
 
 ## Contributing
 
-Please create an issue, fork the repo and create PR for any changes.
+We welcome contributions! Please see the [Contributing Guidelines](CONTRIBUTING.md) for more details.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
