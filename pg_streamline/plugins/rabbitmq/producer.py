@@ -1,6 +1,6 @@
 import logging
 import pika
-from pgoutput_events import Producer
+from pg_streamline import Producer
 
 
 logging.basicConfig(level=logging.INFO)

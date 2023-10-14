@@ -6,13 +6,13 @@ from typing import Dict
 
 import psycopg2
 
-from pgoutput_events import (
+from pg_streamline import (
     InsertMessage,
     UpdateMessage,
     DeleteMessage
 )
 
-from pgoutput_events.utils import setup_custom_logging
+from pg_streamline.utils import setup_custom_logging
 
 
 class Consumer:

@@ -8,7 +8,7 @@ import psycopg2
 from psycopg2.extras import LogicalReplicationConnection
 from psycopg2 import pool, OperationalError
 
-from pgoutput_events.utils import (
+from pg_streamline.utils import (
     setup_custom_logging,
     Utils as parser_utils
 )

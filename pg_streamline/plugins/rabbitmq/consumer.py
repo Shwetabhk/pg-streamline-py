@@ -1,7 +1,7 @@
 import logging
 import json
 import pika
-from pgoutput_events import Consumer
+from pg_streamline import Consumer
 
 
 logging.basicConfig(level=logging.INFO)

@@ -1,12 +1,12 @@
 import pytest
 from unittest import mock
 
-from pgoutput_events import (
+from pg_streamline import (
     InsertMessage,
     UpdateMessage,
     DeleteMessage
 )
-from pgoutput_events.parser.base import BaseMessage
+from pg_streamline.parser.base import BaseMessage
 
 
 # Test InsertMessage decoding

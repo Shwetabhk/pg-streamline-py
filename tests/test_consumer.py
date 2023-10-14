@@ -3,7 +3,7 @@ import psycopg2
 
 import pytest
 
-from pgoutput_events import Consumer
+from pg_streamline import Consumer
 from tests.conftest import ExtendedConsumer
 
 
@@ -65,7 +65,7 @@ def test_terminate(extended_consumer_instance: ExtendedConsumer):
         extended_consumer_instance.cur = mock_cursor
         mock_cursor.execute.side_effect = psycopg2.errors.DuplicateObject
 
-        with mock.patch('pgoutput_events.producer.process.logger.debug'):
+        with mock.patch('pg_streamline.producer.process.logger.debug'):
             with (mock.patch('sys.exit')) as mock_exit:
                 extended_consumer_instance._Consumer__terminate(1, 2)
 

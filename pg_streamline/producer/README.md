@@ -109,7 +109,7 @@ Here's an example:
 ```python
 import json
 import logging
-from pgoutput_events import Producer  # Importing the Producer class from the producer module
+from pg_streamline import Producer  # Importing the Producer class from the producer module
 
 # Setting up basic logging configuration
 logging.basicConfig(level=logging.INFO)

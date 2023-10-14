@@ -3,7 +3,7 @@ import logging
 import pytest
 from unittest.mock import patch
 
-from pgoutput_events import Producer, Consumer
+from pg_streamline import Producer, Consumer
 
 
 
