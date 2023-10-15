@@ -16,7 +16,7 @@ def rabbitmq_producer_instance():
                 'port': '5432',
                 'replication_slot': 'test_slot'
             }
-            return RabbitMQProducer(rabbitmq_url='amqp://localhost', rabbitmq_exchange='pg-exchage', pool_size=5, **params)
+            return RabbitMQProducer(rabbitmq_url='amqp://localhost', rabbitmq_exchange='pg-exchange', pool_size=5, **params)
 
 
 # Fixture for creating an instance of RabbitMQConsumer
