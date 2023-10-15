@@ -7,9 +7,9 @@ from pg_streamline import Producer
 logging.basicConfig(level=logging.INFO)
 
 
-class RabbitMQProducerPlugin(Producer):
+class RabbitMQProducer(Producer):
     """
-    RabbitMQProducerPlugin Class
+    RabbitMQProducer Class
 
     This class extends the base Producer class from the pg_streamline package.
     It initializes a RabbitMQ producer that publishes messages to a specific exchange.
@@ -20,7 +20,7 @@ class RabbitMQProducerPlugin(Producer):
 
     def __init__(self, rabbitmq_url: str, *args, **kwargs):
         """
-        Initialize the RabbitMQProducerPlugin.
+        Initialize the RabbitMQProducer.
 
         Args:
             rabbitmq_url (str): The URL for the RabbitMQ broker.

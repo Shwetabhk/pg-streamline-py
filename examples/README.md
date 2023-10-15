@@ -50,11 +50,11 @@ python wal2json.py
 
 ### RabbitMQ Consumer Example
 
-This example demonstrates how to extend the 'RabbitMQConsumerPlugin' to handle incoming messages.
+This example demonstrates how to extend the 'RabbitMQConsumer' to handle incoming messages.
 
 Snippet:
 ```
-class MyConsumer(RabbitMQConsumerPlugin):
+class MyConsumer(RabbitMQConsumer):
     def perform_action(self, message_type: str, parsed_message: dict):
         logging.info(f'Performing action with message: {message_type}')
 ```
@@ -68,11 +68,11 @@ python -m examples.rabbitmq.consumer
 
 ### RabbitMQ Producer Example
 
-This example shows how to use the 'RabbitMQProducerPlugin' to publish messages to a RabbitMQ broker.
+This example shows how to use the 'RabbitMQProducer' to publish messages to a RabbitMQ broker.
 
 Snippet:
 ```
-class RabbitMQProducerPlugin(Producer):
+class RabbitMQProducer(Producer):
     def perform_action(self, table_name: str, bytes_string: dict):
         logging.info(f'Table name: {table_name}')
 ```

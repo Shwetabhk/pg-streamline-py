@@ -1,2 +1,2 @@
-from .consumer import RabbitMQConsumerPlugin
-from .producer import RabbitMQProducerPlugin
+from .consumer import RabbitMQConsumer
+from .producer import RabbitMQProducer

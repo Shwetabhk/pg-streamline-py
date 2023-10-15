@@ -9,9 +9,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-class RabbitMQConsumerPlugin(Consumer):
+class RabbitMQConsumer(Consumer):
     """
-    RabbitMQConsumerPlugin Class
+    RabbitMQConsumer Class
 
     This class extends the base Consumer class from the pg_streamline package.
     It initializes a RabbitMQ consumer that listens to a specific queue and processes incoming messages.
@@ -24,7 +24,7 @@ class RabbitMQConsumerPlugin(Consumer):
 
     def __init__(self, rabbitmq_url: str, routing_keys: str, queue: str, *args, **kwargs):
         """
-        Initialize the RabbitMQConsumerPlugin.
+        Initialize the RabbitMQConsumer.
 
         Args:
             rabbitmq_url (str): The URL for the RabbitMQ broker.
@@ -65,6 +65,16 @@ class RabbitMQConsumerPlugin(Consumer):
         """
         logger.info(f'Performing action with message: {message_type}')
         logger.info(json.dumps(parsed_message, indent=4))
+    
+    def perform_termination(self):
+        """
+        Close the RabbitMQ connection.
+
+        This method is called to gracefully close the RabbitMQ connection and channel.
+        """
+        logger.info('Closing connection to RabbitMQ')
+        self.channel.close()
+        self.connection.close()
 
     def run_consumer(self):
         """
@@ -74,5 +84,5 @@ class RabbitMQConsumerPlugin(Consumer):
         for each incoming message.
         """
         self.channel.basic_consume(queue='pgtest', on_message_callback=self.callback, auto_ack=True)
-        logger.info('RabbitMQConsumerPlugin is running...')
+        logger.info('RabbitMQConsumer is running...')
         self.channel.start_consuming()

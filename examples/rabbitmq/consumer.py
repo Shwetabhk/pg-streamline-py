@@ -1,17 +1,17 @@
 import logging
-from pg_streamline.plugins.rabbitmq import RabbitMQConsumerPlugin
+from pg_streamline.plugins.rabbitmq import RabbitMQConsumer
 
 
-class MyConsumer(RabbitMQConsumerPlugin):
+class MyConsumer(RabbitMQConsumer):
     """
     MyConsumer Class
 
-    This class extends the RabbitMQConsumerPlugin to override the perform_action method.
+    This class extends the RabbitMQConsumer to override the perform_action method.
     You can plug in your own logic here to handle incoming messages.
 
     Methods:
         perform_action(message_type: str, parsed_message: dict): Overrides the perform_action
-            method from RabbitMQConsumerPlugin to handle incoming messages.
+            method from RabbitMQConsumer to handle incoming messages.
     """
 
     def perform_action(self, message_type: str, parsed_message: dict):

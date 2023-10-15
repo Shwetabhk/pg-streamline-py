@@ -1,4 +1,4 @@
-from pg_streamline.plugins.rabbitmq import RabbitMQProducerPlugin
+from pg_streamline.plugins.rabbitmq import RabbitMQProducer
 
 if __name__ == '__main__':
     """
@@ -32,10 +32,10 @@ if __name__ == '__main__':
 
     # Initialize RabbitMQ Producer
     # ----------------------------
-    # Create an instance of RabbitMQProducerPlugin with a pool size of 5.
+    # Create an instance of RabbitMQProducer with a pool size of 5.
     # The producer will connect to the RabbitMQ broker and the PostgreSQL database
     # with the provided parameters.
-    producer = RabbitMQProducerPlugin(rabbitmq_url=rabbitmq_url, pool_size=5, **db_params)
+    producer = RabbitMQProducer(rabbitmq_url=rabbitmq_url, pool_size=5, **db_params)
 
     # Start Replication
     # -----------------
