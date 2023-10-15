@@ -57,6 +57,7 @@ if __name__ == '__main__':
     # Create an instance of MyConsumer with a pool size of 5
     consumer = MyConsumer(
         rabbitmq_url=rabbitmq_url,
+        rabbitmq_exchange='pg-exchange',
         routing_keys=routing_keys,
         queue='pgtest',
         pool_size=5,

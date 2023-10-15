@@ -18,7 +18,7 @@ class RabbitMQProducer(Producer):
         rabbitmq_url (str): The URL for the RabbitMQ broker.
     """
 
-    def __init__(self, rabbitmq_url: str, *args, **kwargs):
+    def __init__(self, rabbitmq_url: str, rabbitmq_exchange: str, *args, **kwargs):
         """
         Initialize the RabbitMQProducer.
 
@@ -30,7 +30,7 @@ class RabbitMQProducer(Producer):
         self.channel = self.connection.channel()
 
         # Declare a direct exchange
-        self.channel.exchange_declare(exchange='table_exchange', exchange_type='direct')
+        self.channel.exchange_declare(exchange=rabbitmq_exchange, exchange_type='topic', durable=True)
 
     def perform_action(self, table_name: str, bytes_string: dict):
         """

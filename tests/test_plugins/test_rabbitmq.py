@@ -37,14 +37,14 @@ def test_consumer_run_consumer(rabbitmq_consumer_instance: RabbitMQConsumer):
     mock_basic_consume.assert_called_once()
 
 
-def test_perform_action(rabbitmq_consumer_instance: RabbitMQConsumer):
+def test_consumer_perform_action(rabbitmq_consumer_instance: RabbitMQConsumer):
     with mock.patch('logging.Logger.info') as mock_logger:
         rabbitmq_consumer_instance.perform_action('I', {'test': 'test'})
 
     mock_logger.assert_called()
 
 
-def test_perform_termination(rabbitmq_consumer_instance: RabbitMQConsumer):
+def test_consumer_perform_termination(rabbitmq_consumer_instance: RabbitMQConsumer):
     mock_connection = rabbitmq_consumer_instance.connection
     mock_channel = mock_connection.channel.return_value
     mock_channel.close = mock.MagicMock()
@@ -56,12 +56,27 @@ def test_perform_termination(rabbitmq_consumer_instance: RabbitMQConsumer):
     mock_connection.close.assert_called_once()
 
 
-def test_callback(rabbitmq_consumer_instance: RabbitMQConsumer):
+def test_consumer_callback(rabbitmq_consumer_instance):
     mock_method = mock.MagicMock()
     mock_method.routing_key = 'test_routing_key'
+    mock_method.delivery_tag = 'some_tag'
     mock_body = b'test_body'
 
-    with mock.patch('pg_streamline.Consumer.process_incoming_message') as mock_process_incoming_message:
-        rabbitmq_consumer_instance.callback(None, mock_method, None, mock_body)
+    mock_channel = mock.MagicMock()
+    mock_channel.basic_ack = mock.MagicMock()
+    mock_channel.basic_reject = mock.MagicMock()
 
-    mock_process_incoming_message.assert_called_once_with('test_routing_key', mock_body)
+    with mock.patch.object(rabbitmq_consumer_instance, 'process_incoming_message', autospec=True) as mock_process_incoming_message:
+        rabbitmq_consumer_instance.callback(mock_channel, mock_method, None, mock_body)
+
+        mock_process_incoming_message.assert_called_once_with('test_routing_key', mock_body)
+
+        mock_channel.basic_ack.assert_called_once_with(delivery_tag='some_tag')
+
+        mock_channel.basic_reject.assert_not_called()
+    
+        mock_process_incoming_message.side_effect = Exception()
+
+        rabbitmq_consumer_instance.callback(mock_channel, mock_method, None, mock_body)
+
+        mock_channel.basic_reject.assert_called_once_with(delivery_tag='some_tag', requeue=True)

@@ -35,7 +35,7 @@ if __name__ == '__main__':
     # Create an instance of RabbitMQProducer with a pool size of 5.
     # The producer will connect to the RabbitMQ broker and the PostgreSQL database
     # with the provided parameters.
-    producer = RabbitMQProducer(rabbitmq_url=rabbitmq_url, pool_size=5, **db_params)
+    producer = RabbitMQProducer(rabbitmq_url=rabbitmq_url, rabbitmq_exchange='pg-exchage', pool_size=5, **db_params)
 
     # Start Replication
     # -----------------
