@@ -2,7 +2,7 @@
 
 ## Streamlining PostgreSQL Logical Replication and Event Processing
 
-pgStreamline is a Python library designed to simplify and streamline the process of logical replication and event processing with PostgreSQL. It provides modular components for producers, consumers, parsers, and plugins, making it highly extensible and customizable.
+pg-streamline is a Python library designed to simplify and streamline the process of logical replication and event processing with PostgreSQL. It provides modular components for producers, consumers, parsers, and plugins, making it highly extensible and customizable.
 
 ---
 

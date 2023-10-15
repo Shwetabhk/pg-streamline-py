@@ -5,6 +5,7 @@ omit =
     pgoutput.py
     tests/*
     */__init__.py
+    setup.py
 
 [report]
 show_missing=true
