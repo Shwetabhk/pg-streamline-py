@@ -1,6 +1,6 @@
 import json
 import logging
-from pgoutput_events import Producer  # Importing the Producer class from the producer module
+from pg_streamline import Producer  # Importing the Producer class from the producer module
 
 
 # Setting up basic logging configuration
@@ -34,7 +34,7 @@ class PGWal2JSONPGOutputProducer(Producer):
 if __name__ == '__main__':
     # Database and replication parameters
     params = {
-        'dbname': 'pgbench',
+        'dbname': 'dummy',
         'user': 'postgres',
         'password': 'postgres',
         'host': 'localhost',

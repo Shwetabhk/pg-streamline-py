@@ -1,10 +1,10 @@
 # .coveragerc
 [run]
 omit =
-    wal2json.py
-    pgoutput.py
+    examples/*
     tests/*
     */__init__.py
+    setup.py
 
 [report]
 show_missing=true
