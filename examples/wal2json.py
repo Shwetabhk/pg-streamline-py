@@ -34,7 +34,7 @@ class PGWal2JSONPGOutputProducer(Producer):
 if __name__ == '__main__':
     # Database and replication parameters
     params = {
-        'dbname': 'pgbench',
+        'dbname': 'dummy',
         'user': 'postgres',
         'password': 'postgres',
         'host': 'localhost',

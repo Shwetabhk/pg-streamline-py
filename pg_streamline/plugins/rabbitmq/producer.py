@@ -3,11 +3,28 @@ import pika
 from pg_streamline import Producer
 
 
+# Initialize logging
 logging.basicConfig(level=logging.INFO)
 
 
 class RabbitMQProducerPlugin(Producer):
+    """
+    RabbitMQProducerPlugin Class
+
+    This class extends the base Producer class from the pg_streamline package.
+    It initializes a RabbitMQ producer that publishes messages to a specific exchange.
+
+    Attributes:
+        rabbitmq_url (str): The URL for the RabbitMQ broker.
+    """
+
     def __init__(self, rabbitmq_url: str, *args, **kwargs):
+        """
+        Initialize the RabbitMQProducerPlugin.
+
+        Args:
+            rabbitmq_url (str): The URL for the RabbitMQ broker.
+        """
         super().__init__(*args, **kwargs)
         self.connection = pika.BlockingConnection(pika.URLParameters(rabbitmq_url))
         self.channel = self.connection.channel()
@@ -16,6 +33,13 @@ class RabbitMQProducerPlugin(Producer):
         self.channel.exchange_declare(exchange='table_exchange', exchange_type='direct')
 
     def perform_action(self, table_name: str, bytes_string: dict):
+        """
+        Publish a message to the RabbitMQ exchange.
+
+        Args:
+            table_name (str): The table name that the message pertains to.
+            bytes_string (dict): The message content.
+        """
         logging.info(f'Table name: {table_name}, Bytes String: {bytes_string}')
 
         self.channel.basic_publish(
@@ -25,22 +49,11 @@ class RabbitMQProducerPlugin(Producer):
         )
 
     def perform_termination(self):
+        """
+        Close the RabbitMQ connection.
+
+        This method is called to gracefully close the RabbitMQ connection and channel.
+        """
         logging.info('Closing connection to RabbitMQ')
         self.channel.close()
         self.connection.close()
-
-if __name__ == '__main__':
-    # Database and replication parameters
-    db_params = {
-        'dbname': 'dummy',
-        'user': 'postgres',
-        'password': 'postgres',
-        'host': 'localhost',
-        'port': '5432',
-        'replication_slot': 'pgtest'
-    }
-
-    rabbitmq_url = 'amqp://localhost'
-
-    producer = RabbitMQProducerPlugin(rabbitmq_url=rabbitmq_url, pool_size=5, **db_params)
-    producer.start_replication(publication_names=['events'], protocol_version='4')
