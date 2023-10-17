@@ -28,7 +28,7 @@ if __name__ == '__main__':
     # RabbitMQ URL
     # ------------
     # The URL to connect to the RabbitMQ broker.
-    rabbitmq_url = 'amqp://localhost'
+    rabbitmq_url = 'amqp://localhost?heartbeat=0'
 
     # Initialize RabbitMQ Producer
     # ----------------------------

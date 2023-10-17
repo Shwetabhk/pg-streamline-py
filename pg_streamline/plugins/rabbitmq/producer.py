@@ -28,8 +28,9 @@ class RabbitMQProducer(Producer):
         super().__init__(*args, **kwargs)
         self.connection = pika.BlockingConnection(pika.URLParameters(rabbitmq_url))
         self.channel = self.connection.channel()
+        self.rabbitmq_exchange = rabbitmq_exchange
 
-        # Declare a direct exchange
+        # Declare a topic exchange
         self.channel.exchange_declare(exchange=rabbitmq_exchange, exchange_type='topic', durable=True)
 
     def perform_action(self, table_name: str, bytes_string: dict):
@@ -43,9 +44,10 @@ class RabbitMQProducer(Producer):
         logging.info(f'Table name: {table_name}, Bytes String: {bytes_string}')
 
         self.channel.basic_publish(
-            exchange='table_exchange',
+            exchange=self.rabbitmq_exchange,
             routing_key=table_name,
-            body=bytes_string
+            body=bytes_string,
+            properties=pika.BasicProperties(delivery_mode=2)
         )
 
     def perform_termination(self):

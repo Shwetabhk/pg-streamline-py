@@ -1,3 +1,4 @@
+import json
 import logging
 from pg_streamline.plugins.rabbitmq import RabbitMQConsumer
 
@@ -28,7 +29,7 @@ class MyConsumer(RabbitMQConsumer):
 
         """
         logging.info(f'Performing action with message: {message_type}')
-        logging.info(parsed_message)
+        logging.info(json.dumps(parsed_message, indent=4))
 
 
 if __name__ == '__main__':
@@ -49,10 +50,10 @@ if __name__ == '__main__':
     }
 
     # RabbitMQ URL
-    rabbitmq_url = 'amqp://localhost'
+    rabbitmq_url = 'amqp://localhost?heartbeat=0'
 
     # Routing keys for RabbitMQ
-    routing_keys = 'public.pgbench_accounts,public.pgbench_branches,public.pgbench_history,public.pgbench_tellers'
+    routing_keys = 'public.pgbench_accounts,public.pgbench_branches,public.pgbench_history,public.pgbench_tellers,public.users'
 
     # Create an instance of MyConsumer with a pool size of 5
     consumer = MyConsumer(
