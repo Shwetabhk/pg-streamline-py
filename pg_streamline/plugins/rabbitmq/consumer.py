@@ -38,6 +38,7 @@ class RabbitMQConsumer(Consumer):
         self.channel = self.connection.channel()
 
         # Declare the queue
+        self.queue = queue
         self.channel.queue_declare(queue=queue, durable=True, exclusive=False, auto_delete=False)
 
         # Declare the exchange and bind the queue to it with specified routing keys
@@ -90,6 +91,6 @@ class RabbitMQConsumer(Consumer):
         This method starts consuming messages from the RabbitMQ queue and calls the callback function
         for each incoming message.
         """
-        self.channel.basic_consume(queue='pgtest', on_message_callback=self.callback, auto_ack=False)
+        self.channel.basic_consume(queue=self.queue, on_message_callback=self.callback, auto_ack=False)
         logger.info('RabbitMQConsumer is running...')
         self.channel.start_consuming()
