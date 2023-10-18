@@ -18,20 +18,41 @@ class RabbitMQProducer(Producer):
         rabbitmq_url (str): The URL for the RabbitMQ broker.
     """
 
-    def __init__(self, rabbitmq_url: str, rabbitmq_exchange: str, *args, **kwargs):
+    def __init__(self, config_path: str = None):
         """
         Initialize the RabbitMQProducer.
 
         Args:
-            rabbitmq_url (str): The URL for the RabbitMQ broker.
+            config_path (str): The path to the configuration file.
         """
-        super().__init__(*args, **kwargs)
-        self.connection = pika.BlockingConnection(pika.URLParameters(rabbitmq_url))
+        super().__init__(config_path=config_path)
+
+        self.__validate_config()
+
+        self.connection = pika.BlockingConnection(pika.URLParameters(self.config['rabbitmq']['url']))
         self.channel = self.connection.channel()
-        self.rabbitmq_exchange = rabbitmq_exchange
+        self.rabbitmq_exchange = self.config['rabbitmq']['exchange']
 
         # Declare a topic exchange
-        self.channel.exchange_declare(exchange=rabbitmq_exchange, exchange_type='topic', durable=True)
+        self.channel.exchange_declare(exchange=self.rabbitmq_exchange, exchange_type='topic', durable=True)
+
+    def __validate_config(self):
+        """
+        Validate the configuration file.
+        """
+        # Define required keys for RabbitMQ configuration
+        required_rabbitmq_keys = ['url', 'exchange']
+
+        # Check if 'rabbitmq' key exists in config
+        if 'rabbitmq' not in self.config:
+            raise Exception('rabbitmq is missing from the configuration file.')
+
+        rabbitmq_config = self.config['rabbitmq']
+
+        # Validate required keys for RabbitMQ configuration
+        for key in required_rabbitmq_keys:
+            if key not in rabbitmq_config:
+                raise Exception(f'{key} is missing from the configuration file.')
 
     def perform_action(self, table_name: str, bytes_string: dict):
         """

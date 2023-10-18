@@ -9,15 +9,7 @@ from pg_streamline import Producer
 # Test initialization of Producer
 def test_producer_init():
     with mock.patch('psycopg2.connect'):
-        params = {
-            'dbname': 'dummy',
-            'user': 'postgres',
-            'password': 'postgres',
-            'host': 'localhost',
-            'port': '5432',
-            'replication_slot': 'pgtest'
-        }
-        producer = Producer(pool_size=5, **params)
+        producer = Producer()
         assert producer.replication_cursor is not None
         assert producer.replication_slot == 'pgtest'
 

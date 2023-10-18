@@ -23,28 +23,52 @@ class RabbitMQConsumer(Consumer):
         exchange (str): The name of the RabbitMQ exchange to bind to.
     """
 
-    def __init__(self, rabbitmq_url: str, rabbitmq_exchange: str, routing_keys: str, queue: str, *args, **kwargs):
+    def __init__(self, config_path: str = None):
         """
         Initialize the RabbitMQConsumer.
 
         Args:
-            rabbitmq_url (str): The URL for the RabbitMQ broker.
-            routing_keys (str): Comma-separated list of routing keys to bind to the queue.
-            queue (str): The name of the RabbitMQ queue to consume messages from.
-            exchange (str): The name of the RabbitMQ exchange to bind to.
+            config_path (str): The path to the configuration file.
         """
-        super().__init__(*args, **kwargs)
+        super().__init__(config_path=config_path)
+
+        self.__validate_config()
+
+        rabbitmq_url = self.config['rabbitmq']['url']
         self.connection = pika.BlockingConnection(pika.URLParameters(rabbitmq_url))
         self.channel = self.connection.channel()
 
         # Declare the queue
-        self.queue = queue
-        self.channel.queue_declare(queue=queue, durable=True, exclusive=False, auto_delete=False)
+        self.queue = self.config['rabbitmq']['queue']
+        self.channel.queue_declare(queue=self.queue, durable=True, exclusive=False, auto_delete=False)
 
         # Declare the exchange and bind the queue to it with specified routing keys
+
+        rabbitmq_exchange = self.config['rabbitmq']['exchange']
         self.channel.exchange_declare(exchange=rabbitmq_exchange, exchange_type='topic', durable=True)
-        for routing_key in routing_keys.split(','):
-            self.channel.queue_bind(exchange=rabbitmq_exchange, queue=queue, routing_key=routing_key.strip())
+
+        routing_keys = self.config['rabbitmq']['routing_keys']
+
+        for routing_key in routing_keys:
+            self.channel.queue_bind(exchange=rabbitmq_exchange, queue=self.queue, routing_key=routing_key.strip())
+
+    def __validate_config(self):
+        """
+        Validate the configuration file.
+        """
+        # Define required keys for RabbitMQ configuration
+        required_rabbitmq_keys = ['url', 'exchange', 'routing_keys', 'queue']
+
+        # Check if 'rabbitmq' key exists in config
+        if 'rabbitmq' not in self.config:
+            raise Exception('rabbitmq is missing from the configuration file.')
+
+        rabbitmq_config = self.config['rabbitmq']
+
+        # Validate required keys for RabbitMQ configuration
+        for key in required_rabbitmq_keys:
+            if key not in rabbitmq_config:
+                raise Exception(f'{key} is missing from the configuration file.')
 
     def callback(self, channel, method, properties, body):
         """
