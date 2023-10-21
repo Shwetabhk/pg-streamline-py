@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 from pg_streamline.plugins.rabbitmq import RabbitMQConsumer
 
 
@@ -39,31 +40,10 @@ if __name__ == '__main__':
     This block initializes the consumer with database and RabbitMQ parameters,
     and then starts the consumer.
     """
-
-    # Database and consumer parameters
-    db_params = {
-        'dbname': 'dummy',
-        'user': 'postgres',
-        'password': 'postgres',
-        'host': 'localhost',
-        'port': '5432'
-    }
-
-    # RabbitMQ URL
-    rabbitmq_url = 'amqp://localhost?heartbeat=0'
-
-    # Routing keys for RabbitMQ
-    routing_keys = 'public.pgbench_accounts,public.pgbench_branches,public.pgbench_history,public.pgbench_tellers,public.users'
+    os.environ.setdefault('DB_PASSWORD', 'postgres')
 
     # Create an instance of MyConsumer with a pool size of 5
-    consumer = MyConsumer(
-        rabbitmq_url=rabbitmq_url,
-        rabbitmq_exchange='pg-exchange',
-        routing_keys=routing_keys,
-        queue='pgtest',
-        pool_size=5,
-        **db_params
-    )
+    consumer = MyConsumer('pg-streamline-config.yaml')
 
     # Start the consumer
     consumer.run_consumer()

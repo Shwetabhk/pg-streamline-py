@@ -22,15 +22,7 @@ class PGOutputProducer(Producer):
 @pytest.fixture
 def pgo_producer_instance():
     with patch('psycopg2.connect'):
-        params = {
-            'dbname': 'test_db',
-            'user': 'test_user',
-            'password': 'test_password',
-            'host': 'localhost',
-            'port': '5432',
-            'replication_slot': 'test_slot'
-        }
-        return PGOutputProducer(pool_size=5, **params)
+        return PGOutputProducer()
 
 
 # Custom Producer class that implements the perform_action method
@@ -45,30 +37,16 @@ class Wal2jsonProducer(Producer):
 @pytest.fixture
 def wal2json_producer_instance():
     with patch('psycopg2.connect'):
-        params = {
-            'dbname': 'test_db',
-            'user': 'test_user',
-            'password': 'test_password',
-            'host': 'localhost',
-            'port': '5432',
-            'replication_slot': 'test_slot'
-        }
-        return Wal2jsonProducer(pool_size=5, output_plugin='wal2json', **params)
+        instance = Wal2jsonProducer()
+        instance.output_plugin = 'wal2json'
+        return instance
 
 
 # Fixture for creating an instance of Producer
 @pytest.fixture
 def producer_instance():
     with patch('psycopg2.connect'):
-        params = {
-            'dbname': 'test_db',
-            'user': 'test_user',
-            'password': 'test_password',
-            'host': 'localhost',
-            'port': '5432',
-            'replication_slot': 'test_slot'
-        }
-        return Producer(pool_size=5, **params)
+        return Producer()
 
 
 # Custom Consumer class that implements the perform_action method
@@ -85,27 +63,13 @@ class ExtendedConsumer(Consumer):
 @pytest.fixture
 def extended_consumer_instance():
     with patch('psycopg2.connect'):
-        params = {
-            'dbname': 'test_db',
-            'user': 'test_user',
-            'password': 'test_password',
-            'host': 'localhost',
-            'port': '5432'
-        }
-        return ExtendedConsumer(pool_size=5, **params)
+        return ExtendedConsumer()
 
 
 @pytest.fixture
 def consumer_instance():
     with patch('psycopg2.connect'):
-        params = {
-            'dbname': 'test_db',
-            'user': 'test_user',
-            'password': 'test_password',
-            'host': 'localhost',
-            'port': '5432'
-        }
-        return Consumer(pool_size=5, **params)
+        return Consumer()
 
 
 # Fixture for mocking the schema

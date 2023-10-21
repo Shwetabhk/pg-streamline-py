@@ -1,4 +1,6 @@
 from unittest import mock
+
+import pytest
 from pg_streamline.plugins.rabbitmq import RabbitMQProducer, RabbitMQConsumer
 
 # Test Producer class
@@ -22,6 +24,22 @@ def test_producer_perform_termination(rabbitmq_producer_instance: RabbitMQProduc
 
     mock_channel.close.assert_called_once()
     mock_connection.close.assert_called_once()
+
+
+def test_producer_validate_config(rabbitmq_producer_instance: RabbitMQProducer):
+    rabbitmq_producer_instance.config = {}
+
+    with pytest.raises(ConnectionError) as excinfo:
+        rabbitmq_producer_instance._RabbitMQProducer__validate_config()
+
+    assert 'rabbitmq is missing from the configuration file.' in str(excinfo.value)
+
+    rabbitmq_producer_instance.config = {'rabbitmq': {}}
+
+    with pytest.raises(ConnectionError) as excinfo:
+        rabbitmq_producer_instance._RabbitMQProducer__validate_config()
+
+    assert 'url is missing from the configuration file.' in str(excinfo.value)
 
 
 # Test Consumer class
@@ -80,3 +98,19 @@ def test_consumer_callback(rabbitmq_consumer_instance):
         rabbitmq_consumer_instance.callback(mock_channel, mock_method, None, mock_body)
 
         mock_channel.basic_reject.assert_called_once_with(delivery_tag='some_tag', requeue=True)
+
+
+def test_consumer_validate_config(rabbitmq_consumer_instance):
+    rabbitmq_consumer_instance.config = {}
+
+    with pytest.raises(ConnectionError) as excinfo:
+        rabbitmq_consumer_instance._RabbitMQConsumer__validate_config()
+
+    assert 'rabbitmq is missing from the configuration file.' in str(excinfo.value)
+
+    rabbitmq_consumer_instance.config = {'rabbitmq': {}}
+
+    with pytest.raises(ConnectionError) as excinfo:
+        rabbitmq_consumer_instance._RabbitMQConsumer__validate_config()
+
+    assert 'url is missing from the configuration file.' in str(excinfo.value)

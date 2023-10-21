@@ -1,150 +1,110 @@
-# PostgreSQL Logical Replication Producer
+# Consumer Class for PostgreSQL Logical Replication
 
-## Table of Contents
+The 'Consumer' class is designed to handle PostgreSQL logical replication by processing incoming replication messages and performing actions based on the message type. This class is intended to be subclassed, and specific actions should be implemented in the subclass.
 
-- [Overview](#overview)
-- [Features](#features)
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Usage](#usage)
-  - [Initialization](#initialization)
-  - [Starting Replication](#starting-replication)
-  - [Performing Actions](#performing-actions)
-- [Configuration](#configuration)
-- [Logging](#logging)
-- [Signal Handling](#signal-handling)
-- [Contributing](#contributing)
-- [License](#license)
+## Attributes
 
-## Overview
+- 'params' (Dict[str, str]): Connection parameters for the PostgreSQL database.
+- 'conn_pool': Connection pool for managing database connections.
 
-This Python-based producer handles logical replication for PostgreSQL databases. It supports both `pgoutput` and `wal2json` output plugins and provides a simple yet powerful API for extending its functionalities.
-
-## Features
-
-- Connection pooling for efficient database connections.
-- Supports both `pgoutput` and `wal2json` output plugins.
-- Asynchronous processing of database changes.
-- Graceful shutdown and cleanup.
-- Extensible for custom actions on database changes.
-
-## Requirements
-
-- Python 3.8+
-- PostgreSQL 10+
-- psycopg2
-
-## Installation
-
-```bash
-pip install -r requirements.txt
-```
-
-## Usage
-
-### Initialization
-
-To initialize the producer, you need to provide the database connection parameters and optionally the output plugin and pool size.
+## Initialization
 
 ```python
-from producer import Producer
-
-params = {
-    'dbname': 'your_db',
-    'user': 'your_user',
-    'password': 'your_password',
-    'host': 'your_host',
-    'port': 'your_port',
-    'replication_slot': 'your_replication_slot'
-}
-
-producer = Producer(pool_size=5, output_plugin='pgoutput', **params)
-```
-
-### Starting Replication
-
-To start the replication process, you need to specify the publication names and the protocol version.
-
-```python
-producer.start_replication(publication_names=['your_publication'], protocol_version='your_protocol_version')
-```
-
-### Performing Actions
-
-To perform custom actions on database changes, you can extend the 'Producer' class and override the 'perform_action' method.
-
-```python
-class CustomProducer(Producer):
-    def perform_action(self, table_name, bytes_data):
-        # Your custom logic here
-```
-
-### Termination
-
-The producer listens for a 'SIGINT' (Ctrl+C) signal to gracefully terminate the replication process and close all database connections.
-
-```bash
-# To terminate the producer
-Ctrl+C
-```
-
-### Logging
-
-The producer uses Python's built-in logging to provide debug and operational information. You can configure the logging level and format as per your requirements.
-
-### Error Handling
-
-The producer is designed to handle common errors gracefully. For example, if a replication slot already exists, the producer will log a debug message and continue.
-
-### Concurrency
-
-The producer uses Python's 'ThreadPoolExecutor' for concurrent processing of database changes, ensuring efficient use of resources.
-
-### Extending the Producer
-
-You can extend the 'Producer' class to implement custom logic for handling database changes. To do so, create a subclass and override the 'perform_action' method.
-
-Here's an example:
-
-```python
-import json
-import logging
-from pg_streamline import Producer  # Importing the Producer class from the producer module
-
-# Setting up basic logging configuration
-logging.basicConfig(level=logging.INFO)
-
-class PGOutputPGOutputProducer(Producer):
+def __init__(self, config_path: str = None) -> None:
     """
-    PGOutputProducer class that extends the Producer class to handle specific types of messages.
+    Initialize the Consumer class.
+
+    Args:
+        config_path (str): The path to the configuration file.
     """
-
-    def perform_action(self, table_name: str, data: dict):
-        """
-        Overriding the perform_action method to handle different types of messages.
-
-        :param table_name: The name of the table where the change occurred.
-        :param data: The data related to the change.
-        """
-        logging.info(f'Table name: {table_name}')
-        logging.info(f'Data: {data}')
-
-if __name__ == '__main__':
-    # Database and replication parameters
-    params = {
-        'dbname': 'dummy',
-        'user': 'postgres',
-        'password': 'postgres',
-        'host': 'localhost',
-        'port': '5432',
-        'replication_slot': 'pgtest'
-    }
-
-    # Creating an instance of PGOutputProducer with a pool size of 5
-    producer = PGOutputPGOutputProducer(pool_size=5, **params)
-
-    # Starting the replication process
-    producer.start_replication(publication_names=['events'], protocol_version='4')
 ```
 
-By extending the 'Producer' class, you can customize the behavior of the producer to suit your specific needs.
+The '__init__' method initializes the 'Consumer' class. It takes an optional 'config_path' parameter to specify the path to the configuration file. The method performs the following steps:
+
+1. Sets up custom logging for the consumer.
+2. Parses the configuration file specified by 'config_path'.
+3. Validates the configuration to ensure it contains the required database connection parameters.
+4. Initializes the database connection parameters and creates a connection pool.
+5. Registers a signal handler to handle graceful termination.
+
+## Configuration Validation
+
+```python
+@staticmethod
+def __validate_config(config: dict) -> None:
+    """
+    Validate the configuration file.
+
+    Args:
+        config (dict): The parsed configuration file.
+    """
+```
+
+The '__validate_config' method validates the configuration file to ensure it contains the required keys for database configuration. It raises a 'ConnectionError' if any required key is missing.
+
+## Termination
+
+```python
+def perform_termination(self) -> None:
+    """
+    Perform termination tasks. This method should be overridden by subclass.
+    """
+```
+
+The 'perform_termination' method is meant to be overridden by a subclass and should implement any termination tasks specific to the consumer.
+
+```python
+def __terminate(self, *args) -> None:
+    """
+    Terminate the consumer process gracefully.
+    """
+```
+
+The '__terminate' method is called when the consumer process is terminated gracefully. It closes all database connections and invokes the 'perform_termination' method before exiting the process.
+
+## Message Processing
+
+```
+def perform_action(self, message_type: str, parsed_message: dict) -> None:
+    """
+    Perform an action based on the message type and parsed message.
+    This method should be overridden by subclass.
+
+    Args:
+        message_type (str): The type of the message ('I', 'U', 'D').
+        parsed_message (dict): The parsed message data.
+    """
+```
+
+The 'perform_action' method should be overridden by a subclass to specify actions to be taken based on the message type and the parsed message data.
+
+```python
+def process_incoming_message(self, table_name: str, data: bytes) -> None:
+    """
+    Process incoming messages and delegate to the appropriate handler.
+
+    Args:
+        table_name (str): The name of the table the message is related to.
+        data (bytes): The raw message data.
+    """
+```
+
+The 'process_incoming_message' method processes incoming replication messages by determining their type and delegating them to the appropriate handler (insert, update, delete). It also calls the 'perform_action' method with the parsed message data.
+
+## Example Usage
+
+```python
+# Create a subclass of Consumer and implement custom actions
+class CustomConsumer(Consumer):
+    def perform_action(self, message_type: str, parsed_message: dict) -> None:
+        # Implement custom logic based on message type and parsed message
+        pass
+
+# Initialize the custom consumer
+custom_consumer = CustomConsumer(config_path="config.yaml")
+
+# Start the consumer to process replication messages
+# custom_consumer.start()
+```
+
+To use the 'Consumer' class, you can create a subclass and implement custom logic for handling replication messages based on your application's requirements.

@@ -12,7 +12,10 @@ from pg_streamline import (
     DeleteMessage
 )
 
-from pg_streamline.utils import setup_custom_logging
+from pg_streamline.utils import (
+    setup_custom_logging,
+    parse_yaml_config
+)
 
 
 class Consumer:
@@ -24,28 +27,58 @@ class Consumer:
         conn_pool: Connection pool for database connections.
     """
 
-    def __init__(self, pool_size: int = 5, **kwargs) -> None:
+    def __init__(self, config_path: str = None) -> None:
         """
         Initialize the Consumer class.
 
         Args:
-            pool_size (int): The size of the connection pool.
-            **kwargs: Database connection parameters.
+            config_path (str): The path to the configuration file.
         """
         setup_custom_logging()
 
+        config = parse_yaml_config(config_file_path=config_path)
+
+        self.__validate_config(config)
+        
+        self.config = config
+
         self.params: Dict[str, str] = {
-            'dbname': kwargs.get('dbname'),
-            'user': kwargs.get('user'),
-            'password': kwargs.get('password'),
-            'host': kwargs.get('host'),
-            'port': kwargs.get('port')
+            'dbname': config['database']['name'],
+            'user': config['database']['user'],
+            'password': config['database']['password'],
+            'host': config['database']['host'],
+            'port': config['database']['port']
         }
 
+        pool_size = config['database']['connection_pool_size']
         self.conn_pool = psycopg2.pool.SimpleConnectionPool(1, pool_size, **self.params)
 
-        logging.info(f'Consumer initialized for database: {kwargs.get("dbname")} on host: {kwargs.get("host")}:{kwargs.get("port")}')
+        logging.info(f'Consumer initialized for database: {self.params.get("dbname")} on host: {self.params.get("host")}:{self.params.get("port")}')
         signal.signal(signal.SIGINT, self.__terminate)
+
+    @staticmethod
+    def __validate_config(config: dict) -> None:
+        """
+        Validate the configuration file.
+
+        Args:
+            config (dict): The parsed configuration file.
+        """
+        # Define required keys for database configuration
+        required_db_keys = [
+            'name', 'user', 'password', 'host', 'port', 'connection_pool_size'
+        ]
+
+        # Check if 'database' key exists in config
+        if 'database' not in config:
+            raise ConnectionError('Database configuration not found in config file.')
+
+        database_config = config['database']
+
+        # Validate required keys for database configuration
+        for key in required_db_keys:
+            if key not in database_config:
+                raise ConnectionError(f'Database {key} not found in config file.')
 
     def perform_termination(self) -> None:
         """

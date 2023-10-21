@@ -87,3 +87,20 @@ def test_perform_termination(consumer_instance: Consumer):
     with pytest.raises(NotImplementedError) as excinfo:
         consumer_instance.perform_termination()
     assert 'You must implement the perform_termination method in your consumer class' in str(excinfo.value)
+
+
+# Test __validate_config method
+def test_validate_config(consumer_instance: Consumer):
+    config = {}
+
+    with pytest.raises(ConnectionError) as excinfo:
+        consumer_instance._Consumer__validate_config(config)
+
+    assert 'Database configuration not found in config file.' in str(excinfo.value)
+
+    config = {'database': {}}
+
+    with pytest.raises(ConnectionError) as excinfo:
+        consumer_instance._Consumer__validate_config(config)
+
+    assert 'Database name not found in config file.' in str(excinfo.value)

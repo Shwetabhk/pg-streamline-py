@@ -10,7 +10,8 @@ from psycopg2 import pool, OperationalError
 
 from pg_streamline.utils import (
     setup_custom_logging,
-    Utils as parser_utils
+    Utils as parser_utils,
+    parse_yaml_config
 )
 
 
@@ -29,27 +30,32 @@ class Producer:
         output_plugin (str): The output plugin to use ('pgoutput' or 'wal2json').
     """
 
-    def __init__(self, pool_size: int = 5, output_plugin: str = 'pgoutput', **kwargs) -> None:
+    def __init__(self, config_path: str = None) -> None:
         """
         Initialize the Producer class.
 
         Args:
-            pool_size (int): The size of the connection pool.
-            output_plugin (str): The output plugin to use ('pgoutput' or 'wal2json').
-            **kwargs: Database connection parameters.
+            config_path (str): The path to the configuration file.
         """
         setup_custom_logging()
+        
+        config = parse_yaml_config(config_file_path=config_path)
+
+        self.__validate_config(config)
+
+        self.config = config
 
         self.params: Dict[str, str] = {
-            'dbname': kwargs.get('dbname'),
-            'user': kwargs.get('user'),
-            'password': kwargs.get('password'),
-            'host': kwargs.get('host'),
-            'port': kwargs.get('port'),
+            'dbname': config['database']['name'],
+            'user': config['database']['user'],
+            'password': config['database']['password'],
+            'host': config['database']['host'],
+            'port': config['database']['port'],
             'connection_factory': LogicalReplicationConnection
         }
-        self.replication_slot: str = kwargs.get('replication_slot')
-        self.output_plugin = output_plugin
+        self.replication_slot: str = config['database']['replication_slot']
+        self.output_plugin = config['database']['replication_plugin']
+        pool_size = config['database']['connection_pool_size']
         self.conn_pool = pool.SimpleConnectionPool(1, pool_size, **self.params)
 
         connection = self.conn_pool.getconn()
@@ -57,11 +63,36 @@ class Producer:
 
         self.__create_replication_slot(self.replication_slot)
 
-        logger.info(f'Producer initialized for database: {kwargs.get("dbname")} on host: {kwargs.get("host")}:{kwargs.get("port")}')
+        logger.info(f'Producer initialized for database: {self.params.get("dbname")} on host: {self.params.get("host")}:{self.params.get("port")}')
         logger.info(f'Using replication slot: {self.replication_slot}')
         logger.info(f'Using output plugin: {self.output_plugin}')
 
         signal.signal(signal.SIGINT, self.__terminate)
+
+    @staticmethod
+    def __validate_config(config: dict) -> None:
+        """
+        Validate the configuration file.
+
+        Args:
+            config (dict): The parsed configuration file.
+        """
+        # Define required keys for database configuration
+        required_db_keys = [
+            'name', 'user', 'password', 'host', 'port', 
+            'connection_pool_size', 'replication_plugin', 'replication_slot'
+        ]
+
+        # Check if 'database' key exists in config
+        if 'database' not in config:
+            raise ConnectionError('Database configuration not found in config file.')
+
+        database_config = config['database']
+
+        # Validate required keys for database configuration
+        for key in required_db_keys:
+            if key not in database_config:
+                raise ConnectionError(f'Database {key} not found in config file.')
 
     def perform_termination(self) -> None:
         """

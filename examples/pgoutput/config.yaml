@@ -1,0 +1,12 @@
+# Configuration for pg-streamline
+
+# Database Configuration
+database:
+  name: dummy
+  user: postgres
+  password: ${DB_PASSWORD}
+  host: localhost
+  port: 5432
+  connection_pool_size: 5
+  replication_plugin: pgoutput
+  replication_slot: pgtest
