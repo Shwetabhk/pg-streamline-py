@@ -27,16 +27,8 @@ A connection pool object from `psycopg2.pool.SimpleConnectionPool`.
 Initializes the `Consumer` class. It sets up custom logging and initializes the database connection pool.
 
 ```python
-def __init__(self, pool_size: int = 5, **kwargs) -> None:
-    setup_custom_logging()
-    self.params = {
-        'dbname': kwargs.get('dbname'),
-        'user': kwargs.get('user'),
-        'password': kwargs.get('password'),
-        'host': kwargs.get('host'),
-        'port': kwargs.get('port')
-    }
-    self.conn_pool = psycopg2.pool.SimpleConnectionPool(1, pool_size, **self.params)
+def __init__(self, config_path: str) -> None:
+    super().__init__(config_path=config_path)
 ```
 
 ### `perform_termination(self) -> None`
