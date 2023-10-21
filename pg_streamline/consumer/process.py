@@ -120,34 +120,39 @@ class Consumer:
             table_name (str): The name of the table the message is related to.
             data (bytes): The raw message data.
         """
-        logging.debug(f'Incoming message: {data}')
-        message_type = data[:1].decode('utf-8')
         connection = self.conn_pool.getconn()
         cursor = connection.cursor()
 
-        parsed_message = {}
+        try:
+            logging.debug(f'Incoming message: {data}')
+            message_type = data[:1].decode('utf-8')
+            parsed_message = {}
 
-        if message_type == 'I':
-            logging.info(f'INSERT Message, Message Type: {message_type} - {table_name}')
-            parser = InsertMessage(data, cursor=cursor)
-            parsed_message = parser.decode_insert_message()
+            if message_type == 'I':
+                logging.info(f'INSERT Message, Message Type: {message_type} - {table_name}')
+                parser = InsertMessage(data, cursor=cursor)
+                parsed_message = parser.decode_insert_message()
 
-        elif message_type == 'U':
-            logging.info(f'UPDATE Message, Message Type: {message_type} - {table_name}')
-            parser = UpdateMessage(data, cursor=cursor)
-            parsed_message = parser.decode_update_message()
+            elif message_type == 'U':
+                logging.info(f'UPDATE Message, Message Type: {message_type} - {table_name}')
+                parser = UpdateMessage(data, cursor=cursor)
+                parsed_message = parser.decode_update_message()
 
-        elif message_type == 'D':
-            logging.info(f'DELETE Message, Message Type: {message_type} - {table_name}')
-            parser = DeleteMessage(data, cursor=cursor)
-            parsed_message = parser.decode_delete_message()
+            elif message_type == 'D':
+                logging.info(f'DELETE Message, Message Type: {message_type} - {table_name}')
+                parser = DeleteMessage(data, cursor=cursor)
+                parsed_message = parser.decode_delete_message()
 
-        cursor.close()
-        self.conn_pool.putconn(connection)
+            cursor.close()
+            self.conn_pool.putconn(connection)
 
-        if parsed_message:
-            logging.debug(f'Message type: {message_type}, parsed message: {json.dumps(parsed_message, indent=4)}')
-            self.perform_action(message_type, parsed_message)
+            if parsed_message:
+                logging.debug(f'Message type: {message_type}, parsed message: {json.dumps(parsed_message, indent=4)}')
+                self.perform_action(message_type, parsed_message)
 
-        if message_type in ('I', 'U', 'D'):
-            logging.info(f'Sending feedback, Message Type: {message_type} - {table_name}')
+            if message_type in ('I', 'U', 'D'):
+                logging.info(f'Sending feedback, Message Type: {message_type} - {table_name}')
+        except Exception as e:
+            logging.exception(f'An error occurred: {e}')
+            cursor.close()
+            self.conn_pool.putconn(connection)

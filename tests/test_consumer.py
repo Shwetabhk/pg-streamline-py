@@ -18,6 +18,14 @@ def test_insert_process_incoming_message(extended_consumer_instance: ExtendedCon
 
         assert extended_consumer_instance.name == 'Test is successful'
 
+        with mock.patch('pg_streamline.parser.insert.InsertMessage.decode_insert_message') as mock_decode_insert_message:
+            with mock.patch('logging.exception') as mock_logger:
+                mock_decode_insert_message.side_effect = Exception('Error connecting to database.')
+
+                extended_consumer_instance.process_incoming_message('public.users', insert_payload.payload)
+
+            mock_logger.assert_called_once()
+
 
 # Test process_incoming_message method for update payload
 def test_update_process_incoming_message(extended_consumer_instance: ExtendedConsumer, update_payload, mocked_schema):

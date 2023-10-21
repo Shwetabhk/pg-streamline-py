@@ -84,7 +84,7 @@ class RabbitMQConsumer(Consumer):
             self.process_incoming_message(method.routing_key, body)
             channel.basic_ack(delivery_tag=method.delivery_tag)  # Acknowledge message
         except Exception as e:
-            logger.error(f"An error occurred: {e}")
+            logger.exception(f"An error occurred: {e}")
             channel.basic_reject(delivery_tag=method.delivery_tag, requeue=True)  # Reject message
 
     def perform_action(self, message_type: str, parsed_message: dict):
