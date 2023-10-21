@@ -12,6 +12,11 @@ def test_producer_init():
         producer = Producer()
         assert producer.replication_cursor is not None
         assert producer.replication_slot == 'pgtest'
+    
+    with pytest.raises(FileNotFoundError) as excinfo:
+        Producer(config_path='test_config.yml')
+
+    assert 'Configuration file test_config.yml does not exist.' in str(excinfo.value)
 
 
 # Test start_replication method
@@ -148,3 +153,20 @@ def test_perform_termination(producer_instance: Producer):
     with pytest.raises(NotImplementedError) as excinfo:
         producer_instance.perform_termination()
     assert 'You must implement the perform_termination method in your producer class' in str(excinfo.value)
+
+
+# Test __validate_config method
+def test_validate_config(producer_instance: Producer):
+    config = {}
+
+    with pytest.raises(ConnectionError) as excinfo:
+        producer_instance._Producer__validate_config(config)
+
+    assert 'Database configuration not found in config file.' in str(excinfo.value)
+
+    config = {'database': {}}
+
+    with pytest.raises(ConnectionError) as excinfo:
+        producer_instance._Producer__validate_config(config)
+
+    assert 'Database name not found in config file.' in str(excinfo.value)

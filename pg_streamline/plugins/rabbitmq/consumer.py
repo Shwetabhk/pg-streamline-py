@@ -61,14 +61,14 @@ class RabbitMQConsumer(Consumer):
 
         # Check if 'rabbitmq' key exists in config
         if 'rabbitmq' not in self.config:
-            raise Exception('rabbitmq is missing from the configuration file.')
+            raise ConnectionError('rabbitmq is missing from the configuration file.')
 
         rabbitmq_config = self.config['rabbitmq']
 
         # Validate required keys for RabbitMQ configuration
         for key in required_rabbitmq_keys:
             if key not in rabbitmq_config:
-                raise Exception(f'{key} is missing from the configuration file.')
+                raise ConnectionError(f'{key} is missing from the configuration file.')
 
     def callback(self, channel, method, properties, body):
         """
