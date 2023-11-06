@@ -16,7 +16,7 @@ class MyConsumer(RabbitMQConsumer):
             method from RabbitMQConsumer to handle incoming messages.
     """
 
-    def perform_action(self, message_type: str, parsed_message: dict):
+    def perform_action(self, message_type: str, table_name: str, parsed_message: dict):
         """
         Perform Action on Incoming Message
 
@@ -30,6 +30,7 @@ class MyConsumer(RabbitMQConsumer):
 
         """
         logging.info(f'Performing action with message: {message_type}')
+        logging.info(f'Table name: {table_name}')
         logging.info(json.dumps(parsed_message, indent=4))
 
 

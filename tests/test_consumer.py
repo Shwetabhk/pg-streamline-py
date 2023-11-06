@@ -85,6 +85,7 @@ def test_perform_action(consumer_instance: Consumer):
     with pytest.raises(NotImplementedError) as excinfo:
         consumer_instance.perform_action(
             message_type='I',
+            table_name='public.users',
             parsed_message={}
         )
     assert 'You must implement the perform_action method in your consumer class.' in str(excinfo.value)

@@ -98,16 +98,18 @@ class Consumer:
         # Exiting the process gracefully
         sys.exit(0)
 
-    def perform_action(self, message_type: str, parsed_message: dict) -> None:
+    def perform_action(self, message_type: str, table_name: str, parsed_message: dict) -> None:
         """
         Perform an action based on the message type and parsed message.
         This method should be overridden by subclass.
 
         Args:
             message_type (str): The type of the message ('I', 'U', 'D').
+            table_name (str): The name of the table the message is related to.
             parsed_message (dict): The parsed message data.
         """
         logging.debug(f'Consumer - Parsed message: {parsed_message}')
+        logging.debug(f'Consumer - Table name: {table_name}')
         logging.debug(f'Consumer - Message type: {message_type}')
 
         raise NotImplementedError('You must implement the perform_action method in your consumer class.')
@@ -148,7 +150,7 @@ class Consumer:
 
             if parsed_message:
                 logging.debug(f'Message type: {message_type}, parsed message: {json.dumps(parsed_message, indent=4)}')
-                self.perform_action(message_type, parsed_message)
+                self.perform_action(message_type, table_name, parsed_message)
 
             if message_type in ('I', 'U', 'D'):
                 logging.info(f'Sending feedback, Message Type: {message_type} - {table_name}')

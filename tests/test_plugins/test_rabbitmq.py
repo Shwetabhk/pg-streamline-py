@@ -57,7 +57,7 @@ def test_consumer_run_consumer(rabbitmq_consumer_instance: RabbitMQConsumer):
 
 def test_consumer_perform_action(rabbitmq_consumer_instance: RabbitMQConsumer):
     with mock.patch('logging.Logger.info') as mock_logger:
-        rabbitmq_consumer_instance.perform_action('I', {'test': 'test'})
+        rabbitmq_consumer_instance.perform_action('I', 'public.users', {'test': 'test'})
 
     mock_logger.assert_called()
 

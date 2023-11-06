@@ -51,9 +51,10 @@ def producer_instance():
 
 # Custom Consumer class that implements the perform_action method
 class ExtendedConsumer(Consumer):
-    def perform_action(self, message_type: str, parsed_message: dict) -> None:
+    def perform_action(self, message_type: str, table_name: str, parsed_message: dict) -> None:
         logging.debug(f'ExtendedConsumer - Parsed message: {parsed_message}')
         logging.debug(f'ExtendedConsumer - Message type: {message_type}')
+        logging.debug(f'ExtendedConsumer - Table name: {table_name}')
         self.name = 'Test is successful'
     
     def perform_termination(self) -> None:

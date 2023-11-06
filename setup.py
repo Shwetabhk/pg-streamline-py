@@ -5,7 +5,7 @@ with open('README.md', 'r') as f:
 
 setuptools.setup(
     name='pg-streamline',
-    version='1.1.0',
+    version='1.2.0',
     author='Shwetabh Kumar',
     author_email='shwetabh002@gmail.com',
     description='pg-streamline is a Python library designed to simplify and streamline the process of logical replication',

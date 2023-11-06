@@ -62,7 +62,7 @@ This example demonstrates how to extend the 'RabbitMQConsumer' to handle incomin
 Snippet:
 ```
 class MyConsumer(RabbitMQConsumer):
-    def perform_action(self, message_type: str, parsed_message: dict):
+    def perform_action(self, message_type: str, table_name: str, parsed_message: dict):
         logging.info(f'Performing action with message: {message_type}')
 ```
 
